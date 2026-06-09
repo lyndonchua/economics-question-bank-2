@@ -54,6 +54,8 @@ tr:nth-child(even) { background:#f9fafb; }
 .form-grid input,.form-grid select,.form-grid textarea { width:100%; }
 .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:14px; flex-wrap:wrap; }
 .notice { background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; padding:10px; border-radius:10px; margin:10px 0; }
+.import-box { display:grid; grid-template-columns:minmax(220px,1fr) auto auto; gap:10px; align-items:center; margin-top:10px; }
+.import-preview { max-height:180px; overflow:auto; background:#f8fafc; border:1px solid #e5e7eb; border-radius:10px; padding:10px; white-space:pre-wrap; font-size:13px; color:#334155; margin-top:10px; }
 @media (max-width:900px) { .controls,.form-grid { grid-template-columns:1fr; } }
 </style>
 </head>
@@ -64,6 +66,18 @@ tr:nth-child(even) { background:#f9fafb; }
   <div class="filter-title">Firebase Status</div>
   <div id="firebaseStatus" class="status-warn">Checking Firebase connection...</div>
   <div class="small">Added/edited questions and extracted CSQ data will save to Firestore collection: <b>questions</b>.</div>
+</div>
+
+<div class="panel">
+  <div class="filter-title">Import New Questions from JSON</div>
+  <div class="small">Upload a JSON file, preview the processed records, then save them into Firebase collection: <b>questions</b>.</div>
+  <div class="import-box">
+    <input id="jsonImportFile" type="file" accept=".json,application/json">
+    <button class="purple" id="previewJsonButton" type="button">Preview JSON</button>
+    <button class="green" id="importJsonButton" type="button">Import to Firebase</button>
+  </div>
+  <div id="importStatus" class="small"></div>
+  <div id="importPreview" class="import-preview" style="display:none"></div>
 </div>
 
 <div class="panel filters-panel">
@@ -150,6 +164,7 @@ let firebaseQuestions = [];
 let data = [];
 let db = null;
 let firebaseReady = false;
+let pendingImportRecords = [];
 
 const selected = { YearFilter:new Set(), JCFilter:new Set(), Level:new Set(), Group:new Set() };
 let activeKeyword = "";
@@ -162,7 +177,9 @@ const els = {
   keywordInput: document.getElementById("keywordInput"),
   backdrop: document.getElementById("editorBackdrop"),
   editorTitle: document.getElementById("editorTitle"),
-  aiStatus: document.getElementById("aiStatus")
+  aiStatus: document.getElementById("aiStatus"),
+  importStatus: document.getElementById("importStatus"),
+  importPreview: document.getElementById("importPreview")
 };
 
 function setStatus(text, type="warn") {
@@ -456,6 +473,109 @@ If there are no extracts, leave extracts as an empty string. Do not invent conte
   }
 }
 
+function extractRecordsFromJson(json) {
+  if (Array.isArray(json)) return json;
+  if (Array.isArray(json.questions)) return json.questions;
+  if (Array.isArray(json.firebaseQuestions)) return json.firebaseQuestions;
+  if (Array.isArray(json.data)) return json.data;
+  throw new Error("JSON must be an array, or contain questions / firebaseQuestions / data array.");
+}
+
+function makeSafeId(text, fallback) {
+  const base = String(text || "").trim().toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+  return base || fallback;
+}
+
+function normalizeQuestionRecord(raw, index) {
+  const question = raw.Question ?? raw.question ?? raw.QuestionText ?? raw.questionText ?? "";
+  const year = raw.Year ?? raw.year ?? "";
+  const jc = raw.JC ?? raw.jc ?? raw.school ?? raw.School ?? "";
+  const level = raw.Level ?? raw.level ?? "H2";
+  const group = raw.Group ?? raw.group ?? raw.QuestionGroup ?? raw.questionGroup ?? "";
+  const keywords = raw.Keywords ?? raw.keywords ?? "";
+  const extracts = raw.Extracts ?? raw.extracts ?? raw.caseStudyExtracts ?? "";
+
+  const id = raw.id || raw.ID || makeSafeId([
+    year, jc, level, group, String(question).slice(0, 40)
+  ].filter(Boolean).join("-"), "import-" + Date.now() + "-" + index);
+
+  return {
+    id: String(id),
+    YearFilter: String(raw.YearFilter ?? raw.yearFilter ?? year ?? "").trim(),
+    Year: String(year ?? "").trim(),
+    JCFilter: String(raw.JCFilter ?? raw.jcFilter ?? jc ?? "").trim(),
+    JC: String(jc ?? "").trim(),
+    Level: String(level ?? "H2").trim(),
+    Group: String(group ?? "").trim(),
+    Keywords: Array.isArray(keywords) ? keywords.join(", ") : String(keywords ?? "").trim(),
+    Extracts: String(extracts ?? "").trim(),
+    Question: String(question ?? "").trim(),
+    Source: "Firebase"
+  };
+}
+
+async function readSelectedJsonFile() {
+  const fileInput = document.getElementById("jsonImportFile");
+  const file = fileInput.files?.[0];
+  if (!file) throw new Error("Choose a JSON file first.");
+  const text = await file.text();
+  return JSON.parse(text);
+}
+
+async function previewJsonImport() {
+  try {
+    const json = await readSelectedJsonFile();
+    const records = extractRecordsFromJson(json)
+      .map(normalizeQuestionRecord)
+      .filter(r => r.Question);
+    pendingImportRecords = records;
+
+    const sample = records.slice(0, 5).map((r, i) =>
+      `${i+1}. ${r.Year || "No year"} | ${r.JC || "No JC"} | ${r.Level || "No level"} | ${r.Group || "No group"}\n${r.Question.slice(0, 220)}${r.Question.length > 220 ? "..." : ""}`
+    ).join("\n\n");
+
+    els.importPreview.style.display = "block";
+    els.importPreview.textContent = sample || "No valid questions found.";
+    els.importStatus.textContent = `Processed ${records.length} valid question(s). Click Import to Firebase when ready.`;
+  } catch (err) {
+    console.error(err);
+    pendingImportRecords = [];
+    els.importPreview.style.display = "block";
+    els.importPreview.textContent = "";
+    els.importStatus.textContent = "Import preview failed: " + err.message;
+  }
+}
+
+async function importJsonToFirebase() {
+  if (!firebaseReady) return alert("Firebase is not connected.");
+  if (!pendingImportRecords.length) {
+    await previewJsonImport();
+    if (!pendingImportRecords.length) return;
+  }
+  if (!confirm(`Import ${pendingImportRecords.length} question(s) into Firebase? Existing documents with the same id will be overwritten.`)) return;
+
+  let success = 0;
+  let failed = 0;
+  els.importStatus.textContent = "Importing to Firebase...";
+
+  for (const record of pendingImportRecords) {
+    try {
+      await setDoc(doc(db, COLLECTION_NAME, record.id), { ...record, updatedAt: serverTimestamp() });
+      success++;
+      if (success % 50 === 0) els.importStatus.textContent = `Imported ${success}/${pendingImportRecords.length}...`;
+    } catch (err) {
+      console.error("Failed import", record, err);
+      failed++;
+    }
+  }
+
+  await loadFirebaseQuestions();
+  els.importStatus.textContent = `Import completed. Success: ${success}. Failed: ${failed}.`;
+}
+
 function exportData() {
   const payload = { exportedAt:new Date().toISOString(), firebaseQuestions };
   const blob = new Blob([JSON.stringify(payload,null,2)], {type:"application/json"});
@@ -477,6 +597,8 @@ document.getElementById("resetButton").onclick = () => {
 document.getElementById("addButton").onclick = () => openEditor();
 document.getElementById("syncButton").onclick = loadFirebaseQuestions;
 document.getElementById("exportButton").onclick = exportData;
+document.getElementById("previewJsonButton").onclick = previewJsonImport;
+document.getElementById("importJsonButton").onclick = importJsonToFirebase;
 document.getElementById("cancelEditButton").onclick = closeEditor;
 document.getElementById("saveQuestionButton").onclick = saveQuestion;
 document.getElementById("aiKeywordsButton").onclick = generateAIKeywords;

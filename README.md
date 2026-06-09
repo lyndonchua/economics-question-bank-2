@@ -1,78 +1,66 @@
-# Economics Question Bank
+# Economics Question Bank - Firebase Shell
 
-Single-page Economics Question Bank with Firebase Firestore saving and OpenRouter AI keyword/extract generation through a Vercel API proxy.
+This version keeps the app small. It loads questions from Firebase and can import new JSON files directly into Firestore.
 
-## Files
+## Files to upload to GitHub
 
-- `index.html` — main app
-- `api/openrouter.js` — Vercel serverless function that protects your OpenRouter API key
-- `package.json` — minimal project file for Vercel
+- index.html
+- api/openrouter.js
+- package.json
+- sample-questions-template.json optional, for reference only
 
-## Firebase setup
+## Firebase collection
 
-1. Go to Firebase Console.
-2. Create or open your project.
-3. Go to **Build > Firestore Database**.
-4. Click **Create database**.
-5. Start in test mode first while checking deployment.
-6. Go to **Project settings > General > Your apps > Web app**.
-7. Copy the Firebase config.
-8. In `index.html`, replace this block:
+The app reads and writes to Firestore collection:
 
-```js
-const firebaseConfig = {
-  apiKey: "PASTE_FIREBASE_API_KEY",
-  authDomain: "PASTE_PROJECT_ID.firebaseapp.com",
-  projectId: "PASTE_PROJECT_ID",
-  storageBucket: "PASTE_PROJECT_ID.appspot.com",
-  messagingSenderId: "PASTE_MESSAGING_SENDER_ID",
-  appId: "PASTE_APP_ID"
-};
-```
+questions
 
-with your actual Firebase config.
+## Importing new questions
 
-## Temporary Firestore rules for testing
+1. Open the deployed app.
+2. Use the "Import New Questions from JSON" section.
+3. Choose a JSON file.
+4. Click "Preview JSON".
+5. If the preview looks correct, click "Import to Firebase".
+6. Click "Reload Firebase".
 
-Use this only while testing:
+## Accepted JSON formats
 
-```js
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /questions/{docId} {
-      allow read, write: if true;
-    }
-  }
+The file can be:
+
+1. A direct array:
+
+[
+  { "Year": "2026", "JC": "SAJC", "Level": "H2", "Group": "EQ1", "Question": "..." }
+]
+
+2. An object with one of these arrays:
+
+{
+  "questions": [ ... ]
 }
-```
 
-After testing, secure the app with Firebase Authentication or restrict writes.
+{
+  "firebaseQuestions": [ ... ]
+}
 
-## GitHub upload
+{
+  "data": [ ... ]
+}
 
-1. Create a new GitHub repository, e.g. `econs-question-bank`.
-2. Upload all files and folders in this package.
-3. Commit changes.
+## Supported field names
 
-## Vercel deployment
+Preferred fields:
 
-1. Go to Vercel.
-2. Add New Project.
-3. Import your GitHub repository.
-4. Framework preset: **Other**.
-5. Build command: leave blank.
-6. Output directory: leave blank.
-7. Add Environment Variable:
-   - Name: `OPENROUTER_API_KEY`
-   - Value: your OpenRouter key
-8. Deploy.
+- id
+- YearFilter
+- Year
+- JCFilter
+- JC
+- Level
+- Group
+- Keywords
+- Extracts
+- Question
 
-## Local testing with Vercel CLI
-
-```bash
-npm i -g vercel
-vercel dev
-```
-
-Then open the local URL shown in the terminal.
+The importer also accepts lowercase versions like year, jc, level, group, keywords, extracts, question.
