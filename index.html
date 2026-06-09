@@ -1,148 +1,157 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Economics Question Bank - Firebase AI Extracts</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Economics Question Bank V5</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
 <style>
-:root {
-  --blue:#1f4ea3; --light:#f4f6fb; --border:#d6dbe6; --text:#1f2937; --muted:#64748b;
-  --green:#15803d; --red:#b91c1c; --orange:#ea580c; --purple:#7c3aed;
+:root{
+  --blue:#1f4ea3;--light:#f4f6fb;--border:#d6dbe6;--text:#1f2937;--muted:#64748b;
+  --green:#15803d;--red:#b91c1c;--orange:#ea580c;--purple:#7c3aed;--dark:#102a5c;
 }
-* { box-sizing:border-box; }
-body { font-family:Arial,sans-serif; margin:0; padding:24px; background:var(--light); color:var(--text); }
-h1 { margin:0 0 16px; color:#102a5c; font-size:2.2rem; }
-.panel { background:white; border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:16px; box-shadow:0 4px 14px rgba(0,0,0,.06); }
-.filters-panel { max-height:38vh; overflow-y:auto; }
-.filter-section { margin-bottom:10px; }
-.filter-title { font-weight:bold; margin-bottom:6px; color:#334155; font-size:1.02rem; }
-.button-group { display:flex; flex-wrap:wrap; gap:6px; }
-.filter-btn { border:1px solid #c7cede; background:#f8fafc; color:#334155; padding:6px 10px; border-radius:999px; cursor:pointer; font-size:13px; }
-.filter-btn.active { background:var(--blue); color:white; border-color:var(--blue); }
-.controls { display:grid; grid-template-columns:minmax(220px,1fr) repeat(5,auto); gap:10px; margin-top:10px; align-items:center; }
-input, select, textarea, button { padding:10px; border-radius:10px; border:1px solid #c7cede; font-size:14px; font-family:Arial,sans-serif; }
-textarea { min-height:120px; resize:vertical; }
-button { cursor:pointer; font-weight:bold; }
-button.main { background:var(--blue); color:white; border:none; }
-button.secondary { background:#64748b; color:white; border:none; }
-button.green { background:var(--green); color:white; border:none; }
-button.red { background:var(--red); color:white; border:none; }
-button.orange { background:var(--orange); color:white; border:none; }
-button.purple { background:var(--purple); color:white; border:none; }
-button.light { background:#f8fafc; color:#334155; border:1px solid #c7cede; }
-#count, #firebaseStatus { font-weight:bold; margin-top:12px; }
-.status-ok { color:var(--green); }
-.status-warn { color:var(--orange); }
-.status-bad { color:var(--red); }
-.table-wrap { max-height:58vh; overflow:auto; }
-table { width:100%; border-collapse:collapse; background:white; min-width:1250px; }
-th,td { border-bottom:1px solid #e5e7eb; padding:10px; text-align:left; vertical-align:top; }
-th { background:var(--blue); color:white; position:sticky; top:0; z-index:1; }
-tr:nth-child(even) { background:#f9fafb; }
-.question { white-space:pre-wrap; line-height:1.4; min-width:360px; }
-.extracts { white-space:pre-wrap; line-height:1.4; min-width:300px; color:#334155; background:#f8fafc; border-radius:10px; padding:8px; }
-.keywords { line-height:1.6; min-width:170px; }
-.tag { display:inline-block; background:#e8f0ff; color:#1f4ea3; border:1px solid #c8dcff; padding:2px 7px; border-radius:999px; margin:2px; font-size:12px; }
-.actions { display:flex; gap:6px; flex-wrap:wrap; min-width:140px; }
-.small { color:var(--muted); font-size:13px; }
-.modal-backdrop { display:none; position:fixed; inset:0; background:rgba(15,23,42,.55); z-index:10; align-items:center; justify-content:center; padding:20px; }
-.modal { background:white; width:min(1000px,96vw); max-height:92vh; overflow:auto; border-radius:16px; padding:18px; box-shadow:0 20px 60px rgba(0,0,0,.25); }
-.modal h2 { margin-top:0; color:#102a5c; }
-.form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
-.form-grid .full { grid-column:1/-1; }
-.label { font-weight:bold; font-size:13px; display:block; margin-bottom:5px; color:#334155; }
-.form-grid input,.form-grid select,.form-grid textarea { width:100%; }
-.modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:14px; flex-wrap:wrap; }
-.notice { background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; padding:10px; border-radius:10px; margin:10px 0; }
-.import-box { display:grid; grid-template-columns:minmax(220px,1fr) auto auto; gap:10px; align-items:center; margin-top:10px; }
-.import-preview { max-height:180px; overflow:auto; background:#f8fafc; border:1px solid #e5e7eb; border-radius:10px; padding:10px; white-space:pre-wrap; font-size:13px; color:#334155; margin-top:10px; }
-.import-modal .modal { width:min(1180px,98vw); }
-.import-record-tabs { display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 14px; }
-.import-record-tab { border:1px solid #c7cede; background:#f8fafc; color:#334155; padding:7px 10px; border-radius:999px; cursor:pointer; font-weight:bold; }
-.import-record-tab.active { background:var(--purple); color:white; border-color:var(--purple); }
-.import-edit-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
-.import-edit-grid .full { grid-column:1/-1; }
-.import-edit-grid input,.import-edit-grid select,.import-edit-grid textarea { width:100%; }
-.import-edit-grid textarea { min-height:160px; }
-#importEditExtracts { min-height:280px; }
-#importEditQuestion { min-height:220px; }
-#importEditKeywords { min-height:110px; }
-.import-validation { background:#f8fafc; border:1px solid #e5e7eb; border-radius:10px; padding:10px; margin-top:10px; white-space:pre-wrap; font-size:13px; }
-@media (max-width:900px) { .import-edit-grid { grid-template-columns:1fr; } }
-@media (max-width:900px) { .controls,.form-grid { grid-template-columns:1fr; } }
+*{box-sizing:border-box}
+body{font-family:Arial,sans-serif;margin:0;padding:20px;background:var(--light);color:var(--text)}
+h1{margin:0 0 14px;color:var(--dark);font-size:2rem}
+h2{margin:0 0 10px;color:var(--dark)}
+.panel{background:white;border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px;box-shadow:0 4px 14px rgba(0,0,0,.06)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.full{grid-column:1/-1}
+label{font-weight:bold;font-size:13px;color:#334155;display:block;margin-bottom:5px}
+input,select,textarea,button{padding:10px;border-radius:10px;border:1px solid #c7cede;font-size:14px;font-family:Arial,sans-serif}
+input,select,textarea{width:100%}
+textarea{min-height:130px;resize:vertical}
+button{cursor:pointer;font-weight:bold}
+.main{background:var(--blue);color:white;border:none}
+.green{background:var(--green);color:white;border:none}
+.red{background:var(--red);color:white;border:none}
+.orange{background:var(--orange);color:white;border:none}
+.purple{background:var(--purple);color:white;border:none}
+.secondary{background:#64748b;color:white;border:none}
+.light{background:#f8fafc;color:#334155;border:1px solid #c7cede}
+.small{color:var(--muted);font-size:13px}
+.status-ok{color:var(--green);font-weight:bold}
+.status-warn{color:var(--orange);font-weight:bold}
+.status-bad{color:var(--red);font-weight:bold}
+.notice{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;padding:10px;border-radius:10px;margin:10px 0}
+.filter-section{margin-bottom:10px}
+.filter-title{font-weight:bold;margin-bottom:6px;color:#334155;font-size:1rem}
+.button-group{display:flex;flex-wrap:wrap;gap:6px}
+.filter-btn{border:1px solid #c7cede;background:#f8fafc;color:#334155;padding:6px 10px;border-radius:999px;cursor:pointer;font-size:13px}
+.filter-btn.active{background:var(--blue);color:white;border-color:var(--blue)}
+.controls{display:grid;grid-template-columns:minmax(220px,1fr) repeat(5,auto);gap:10px;margin-top:10px;align-items:center}
+.table-wrap{max-height:58vh;overflow:auto}
+table{width:100%;border-collapse:collapse;background:white;min-width:1300px}
+th,td{border-bottom:1px solid #e5e7eb;padding:10px;text-align:left;vertical-align:top}
+th{background:var(--blue);color:white;position:sticky;top:0;z-index:1}
+tr:nth-child(even){background:#f9fafb}
+.question,.extracts{white-space:pre-wrap;line-height:1.4}
+.question{min-width:360px}
+.extracts{min-width:300px;color:#334155;background:#f8fafc;border-radius:10px;padding:8px}
+.tag{display:inline-block;background:#e8f0ff;color:#1f4ea3;border:1px solid #c8dcff;padding:2px 7px;border-radius:999px;margin:2px;font-size:12px}
+.actions{display:flex;gap:6px;flex-wrap:wrap;min-width:150px}
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(15,23,42,.58);z-index:20;align-items:center;justify-content:center;padding:20px}
+.modal{background:white;width:min(1120px,97vw);max-height:92vh;overflow:auto;border-radius:16px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+.preview-card{border:1px solid var(--border);border-radius:12px;padding:12px;margin:10px 0;background:#fbfdff}
+.preview-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.preview-summary{white-space:pre-wrap;max-height:170px;overflow:auto;background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:8px;margin-top:8px}
+.progress{height:8px;background:#e5e7eb;border-radius:99px;overflow:hidden;margin:8px 0}
+.progress > div{height:100%;width:0%;background:var(--blue)}
+.badge{display:inline-block;border-radius:999px;padding:2px 8px;font-size:12px;background:#eef2ff;color:#3730a3;border:1px solid #c7d2fe}
+.warning-card{border:1px solid #fbbf24;background:#fffbeb;color:#92400e;border-radius:10px;padding:8px;margin-top:8px}
+@media(max-width:900px){.grid,.controls{grid-template-columns:1fr}.modal{width:98vw}}
 </style>
 </head>
+
 <body>
-<h1>Economics Question Bank</h1>
+<h1>Economics Question Bank V5</h1>
 
 <div class="panel">
-  <div class="filter-title">Firebase Status</div>
+  <h2>Firebase Status</h2>
   <div id="firebaseStatus" class="status-warn">Checking Firebase connection...</div>
-  <div class="small">Added/edited questions and extracted CSQ data will save to Firestore collection: <b>questions</b>.</div>
+  <div class="small">All finalized records save to Firestore collection: <b>questions</b>.</div>
 </div>
 
 <div class="panel">
-  <div class="filter-title">Import New Questions from JSON</div>
-  <div class="small">Upload a JSON file, preview the processed records, then save them into Firebase collection: <b>questions</b>.</div>
-  <div class="import-box">
-    <input id="jsonImportFile" type="file" accept=".json,application/json">
-    <button class="purple" id="previewJsonButton" type="button">Preview JSON</button>
-    <button class="green" id="importJsonButton" type="button">Import to Firebase</button>
+  <h2>Upload and Process New Questions</h2>
+  <div class="notice">
+    Upload PDF, Word, Excel or JSON. PDF/Word/Excel files are converted to text, processed by AI, then shown in Review & Edit before Firebase import.
+    JSON files skip AI and go straight to Review & Edit.
   </div>
-  <div id="importStatus" class="small"></div>
-  <div id="importPreview" class="import-preview" style="display:none"></div>
+
+  <div class="row">
+    <input id="fileInput" type="file" multiple accept=".pdf,.docx,.doc,.xlsx,.xls,.json,.txt" />
+    <button class="purple" id="processFilesButton" type="button">Process Uploaded Files</button>
+    <button class="green" id="importReviewedButton" type="button">Import Reviewed Records</button>
+    <button class="light" id="clearStagingButton" type="button">Clear Staging</button>
+  </div>
+
+  <div class="small" id="uploadStatus">No files processed yet.</div>
+  <div class="progress"><div id="progressBar"></div></div>
+
+  <details style="margin-top:10px">
+    <summary><b>AI processor prompt used by this app</b></summary>
+    <pre id="processorPromptBox" style="white-space:pre-wrap;background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:10px;max-height:320px;overflow:auto"></pre>
+  </details>
+
+  <div id="stagingArea"></div>
 </div>
 
-<div class="panel filters-panel">
+<div class="panel">
   <div class="filter-section"><div class="filter-title">Question Group</div><div class="button-group" id="groupButtons"></div></div>
   <div class="filter-section"><div class="filter-title">Year</div><div class="button-group" id="yearButtons"></div></div>
   <div class="filter-section"><div class="filter-title">JC</div><div class="button-group" id="jcButtons"></div></div>
   <div class="filter-section"><div class="filter-title">Level</div><div class="button-group" id="levelButtons"></div></div>
+
   <div class="controls">
-    <input id="keywordInput" type="text" placeholder="Search keyword, question, extract, JC, year...">
+    <input id="keywordInput" type="text" placeholder="Search keyword, question, extract, answer, examiner comments, JC, year...">
     <button class="main" id="searchButton" type="button">Search</button>
     <button class="secondary" id="resetButton" type="button">Reset</button>
     <button class="green" id="addButton" type="button">+ Add Question</button>
     <button class="orange" id="syncButton" type="button">Reload Firebase</button>
     <button class="light" id="exportButton" type="button">Export JSON</button>
   </div>
-  <div id="count"></div>
+  <div id="count" class="small" style="margin-top:10px"></div>
 </div>
 
 <div class="panel table-wrap">
   <table>
-    <thead><tr><th>Year</th><th>JC</th><th>Level</th><th>Group</th><th>Keywords</th><th>Extracts</th><th>Question</th><th>Actions</th></tr></thead>
+    <thead>
+      <tr>
+        <th>Year</th><th>JC</th><th>Level</th><th>Group</th><th>Keywords</th>
+        <th>Extracts</th><th>Question</th><th>Answer</th><th>Examiner Comments</th><th>Actions</th>
+      </tr>
+    </thead>
     <tbody id="resultsBody"></tbody>
   </table>
 </div>
 
 <div class="modal-backdrop" id="editorBackdrop">
   <div class="modal">
-    <h2 id="editorTitle">Add Question</h2>
-
-    <div class="notice">
-      OpenRouter API key is stored safely in Vercel Environment Variables. Do not paste the AI key into this HTML file.
-    </div>
-
-    <div class="form-grid">
-      <div><label class="label">Year Filter Button</label><input id="editYearFilter" placeholder="e.g. 2025 or Before 2015"></div>
-      <div><label class="label">Year Display</label><input id="editYear" placeholder="e.g. 2025 or Before 2015 (2014)"></div>
-      <div><label class="label">JC Filter Button</label><input id="editJCFilter" placeholder="e.g. CJC, All Promo, All BT"></div>
-      <div><label class="label">JC Display</label><input id="editJC" placeholder="e.g. CJC or All Promo (SAJC FE)"></div>
-      <div><label class="label">Level</label><select id="editLevel"><option value="H1">H1</option><option value="H2">H2</option></select></div>
-      <div><label class="label">Question Group</label><input id="editGroup" placeholder="e.g. CSQ1, EQ1, EQ2"></div>
-      <div class="full"><label class="label">Keywords</label><input id="editKeywords" placeholder="e.g. Inflation, ADAS, Fiscal Policy"></div>
-      <div class="full">
+    <h2 id="editorTitle">Edit Question</h2>
+    <div class="notice">Clean schema: Year, JC, Level, Group, Keywords, Extracts, Question, Answer, Examiner Comments. No PaperType, QuestionNumber or Title.</div>
+    <div class="grid">
+      <div><label>Year</label><input id="editYear" placeholder="e.g. 2025"></div>
+      <div><label>JC</label><input id="editJC" placeholder="e.g. SAJC"></div>
+      <div><label>Level</label><select id="editLevel"><option value="H1">H1</option><option value="H2">H2</option></select></div>
+      <div><label>Group</label><input id="editGroup" placeholder="e.g. FE/CSQ1, CT/EQ1"></div>
+      <div class="full"><label>Keywords, separated by commas</label><input id="editKeywords" placeholder="e.g. Healthcare, Positive Externalities, Subsidies"></div>
+      <div class="full row">
         <button class="main" id="aiKeywordsButton" type="button">Generate Keywords with AI</button>
         <button class="purple" id="aiExtractButton" type="button">AI Identify Extracts + Questions</button>
         <span class="small" id="aiStatus"></span>
       </div>
-      <div class="full"><label class="label">Extracts / Case Study Material</label><textarea id="editExtracts" placeholder="For case studies, paste extracts here or let AI identify them from the full text."></textarea></div>
-      <div class="full"><label class="label">Question</label><textarea id="editQuestion" placeholder="Paste or type the question here. For CSQ, you may paste the full case text and let AI split extracts/questions."></textarea></div>
-      <div class="full"><label class="label">Answer</label><textarea id="editAnswer" placeholder="Optional: paste suggested answer here."></textarea></div>
-      <div class="full"><label class="label">Examiner Comments</label><textarea id="editExaminerComments" placeholder="Optional: paste examiner comments here."></textarea></div>
+      <div class="full"><label>Extracts / Case Study Material</label><textarea id="editExtracts"></textarea></div>
+      <div class="full"><label>Question</label><textarea id="editQuestion"></textarea></div>
+      <div class="full"><label>Answer</label><textarea id="editAnswer"></textarea></div>
+      <div class="full"><label>Examiner Comments</label><textarea id="editExaminerComments"></textarea></div>
     </div>
-
     <div class="modal-actions">
       <button class="secondary" id="cancelEditButton" type="button">Cancel</button>
       <button class="green" id="saveQuestionButton" type="button">Save to Firebase</button>
@@ -150,40 +159,36 @@ tr:nth-child(even) { background:#f9fafb; }
   </div>
 </div>
 
-<div class="modal-backdrop import-modal" id="importEditorBackdrop">
+<div class="modal-backdrop" id="reviewBackdrop">
   <div class="modal">
-    <h2>Preview & Edit JSON Import</h2>
-    <div class="small">Review and edit each record before importing to Firebase. Only these fields are used: Year, JC, Level, Group, Keywords, Extracts, Question, Answer, Examiner Comments.</div>
-    <div id="importRecordTabs" class="import-record-tabs"></div>
-    <div class="import-edit-grid">
-      <div><label class="label">Year</label><input id="importEditYear" placeholder="e.g. 2025"></div>
-      <div><label class="label">JC</label><input id="importEditJC" placeholder="e.g. SAJC"></div>
-      <div><label class="label">Level</label><select id="importEditLevel"><option value="H1">H1</option><option value="H2">H2</option></select></div>
-      <div><label class="label">Group</label><input id="importEditGroup" placeholder="e.g. FE/CSQ1, CT/EQ1"></div>
-      <div class="full"><label class="label">Keywords, one per line or comma-separated</label><textarea id="importEditKeywords"></textarea></div>
-      <div class="full"><label class="label">Extracts / Case Study Material</label><textarea id="importEditExtracts"></textarea></div>
-      <div class="full"><label class="label">Question</label><textarea id="importEditQuestion"></textarea></div>
-      <div class="full"><label class="label">Answer</label><textarea id="importEditAnswer" placeholder="Optional"></textarea></div>
-      <div class="full"><label class="label">Examiner Comments</label><textarea id="importEditExaminerComments" placeholder="Optional"></textarea></div>
+    <h2 id="reviewTitle">Review & Edit Before Import</h2>
+    <div class="small" id="reviewSubtext"></div>
+    <div class="grid" style="margin-top:12px">
+      <div><label>Year</label><input id="reviewYear"></div>
+      <div><label>JC</label><input id="reviewJC"></div>
+      <div><label>Level</label><select id="reviewLevel"><option value="H1">H1</option><option value="H2">H2</option></select></div>
+      <div><label>Group</label><input id="reviewGroup"></div>
+      <div class="full"><label>Keywords, separated by commas</label><input id="reviewKeywords"></div>
+      <div class="full"><label>Extracts</label><textarea id="reviewExtracts" style="min-height:210px"></textarea></div>
+      <div class="full"><label>Question</label><textarea id="reviewQuestion" style="min-height:180px"></textarea></div>
+      <div class="full"><label>Answer</label><textarea id="reviewAnswer"></textarea></div>
+      <div class="full"><label>Examiner Comments</label><textarea id="reviewExaminerComments"></textarea></div>
     </div>
-    <div id="importValidation" class="import-validation"></div>
+    <div id="duplicateWarning"></div>
     <div class="modal-actions">
-      <button class="secondary" id="closeImportEditorButton" type="button">Close</button>
-      <button class="light" id="saveImportEditButton" type="button">Save Current Edit</button>
-      <button class="green" id="importEditedJsonButton" type="button">Import Edited Records to Firebase</button>
+      <button class="secondary" id="cancelReviewButton" type="button">Close</button>
+      <button class="orange" id="saveReviewButton" type="button">Save Review Changes</button>
+      <button class="green" id="importOneButton" type="button">Import This Record</button>
     </div>
   </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import { getFirestore, collection, getDocs, setDoc, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-
-/* =========================
-   CONFIG SECTION
-   1. Paste Firebase config
-   2. Add OPENROUTER_API_KEY in Vercel Environment Variables
-========================= */
+import {
+  getFirestore, collection, getDocs, addDoc, setDoc, doc, deleteDoc,
+  serverTimestamp, query, where, limit
+} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBUgKdY5Rj3IfN2hrdXm2inCI2DkHvQ9ik",
@@ -194,612 +199,545 @@ const firebaseConfig = {
   appId: "1:721758535915:web:0c6d2c4a12a6000bca7eae"
 };
 
-const OPENROUTER_MODEL = "openai/gpt-4o-mini";
+const PROCESSOR_PROMPT = `You are an A-Level Economics Question Bank Processor.
 
-const COLLECTION_NAME = "questions";
+Read the uploaded document.
 
-/* ========================= */
+Identify:
 
-let firebaseQuestions = [];
-let data = [];
-let db = null;
-let firebaseReady = false;
-let pendingImportRecords = [];
-let activeImportIndex = 0;
+1. Year of paper
+2. School (JC)
+3. Level (H1/H2)
+4. Exam Type (WA1, WA2, CT, FE, Promo, Prelim, A Level)
+5. Question Number only for forming Group
+6. All Extracts
+7. Full Question
+8. Economics keywords based on syllabus concepts
+9. Answers if provided
+10. Examiner comments if provided
 
-const selected = { YearFilter:new Set(), JCFilter:new Set(), Level:new Set(), Group:new Set() };
-let activeKeyword = "";
-let editingId = null;
+Output JSON only.
 
-const els = {
-  status: document.getElementById("firebaseStatus"),
-  resultsBody: document.getElementById("resultsBody"),
-  count: document.getElementById("count"),
-  keywordInput: document.getElementById("keywordInput"),
-  backdrop: document.getElementById("editorBackdrop"),
-  editorTitle: document.getElementById("editorTitle"),
-  aiStatus: document.getElementById("aiStatus"),
-  importStatus: document.getElementById("importStatus"),
-  importPreview: document.getElementById("importPreview")
-};
+Schema:
 
-function setStatus(text, type="warn") {
-  els.status.textContent = text;
-  els.status.className = type === "ok" ? "status-ok" : type === "bad" ? "status-bad" : "status-warn";
+{
+  "Year":"",
+  "JC":"",
+  "Level":"",
+  "Group":"",
+  "Keywords":[],
+  "Extracts":"",
+  "Question":"",
+  "Answer":"",
+  "ExaminerComments":"",
+  "SourceFile":""
 }
 
-async function initFirebase() {
-  try {
-    if (firebaseConfig.apiKey.startsWith("PASTE_") || firebaseConfig.projectId.startsWith("PASTE_")) {
-      setStatus("Firebase config not pasted yet. Paste Firebase config to load questions from Firestore.", "warn");
-      rebuildData();
-      return;
-    }
-    const app = initializeApp(firebaseConfig);
-    db = getFirestore(app);
-    firebaseReady = true;
-    await loadFirebaseQuestions();
-    setStatus("Connected to Firebase. Added/edited questions will sync to Firestore.", "ok");
-  } catch (err) {
-    console.error(err);
-    setStatus("Firebase connection failed. Check config and Firestore rules.", "bad");
-    rebuildData();
-  }
+Rules:
+- One JSON object per complete CSQ or Essay.
+- Keep entire CSQ together.
+- Keep all extracts together.
+- Do not split CSQ subparts into separate records.
+- Group must be FE/CSQ1, CT/EQ1, Prelim/EQ6, WA1/EQ1, WA2/CSQ1, A Level/CSQ1, etc.
+- Do not include PaperType.
+- Do not include QuestionNumber.
+- Do not include Title.
+- Use official A-Level Economics terminology for keywords.
+- Generate at least 10 economics keywords where appropriate.
+- If answers are present, put them in Answer. If absent, leave Answer as empty string.
+- If examiner comments are present, put them in ExaminerComments. If absent, leave ExaminerComments as empty string.
+- Output valid JSON only.
+- Output an array of JSON objects.`;
+
+document.getElementById("processorPromptBox").textContent = PROCESSOR_PROMPT;
+
+let app, db;
+let firebaseOK = false;
+let questions = [];
+let filtered = [];
+let stagedRecords = [];
+let currentEditId = null;
+let currentReviewIndex = null;
+let activeFilters = { group:null, year:null, jc:null, level:null };
+
+const el = id => document.getElementById(id);
+
+function asArrayKeywords(value){
+  if(Array.isArray(value)) return value.map(x => String(x).trim()).filter(Boolean);
+  if(typeof value === "string") return value.split(",").map(x => x.trim()).filter(Boolean);
+  return [];
 }
-
-async function loadFirebaseQuestions() {
-  if (!firebaseReady) return;
-  const snap = await getDocs(collection(db, COLLECTION_NAME));
-  firebaseQuestions = [];
-  snap.forEach(d => firebaseQuestions.push({ id:d.id, ...d.data(), Source:"Firebase" }));
-  rebuildData();
-}
-
-function rebuildData() {
-  data = [...firebaseQuestions];
-  rebuildButtons();
-  renderTable();
-}
-
-function getOptions(key) {
-  const vals = [...new Set(data.map(r => r[key]).filter(Boolean))];
-  if (key === "YearFilter") {
-    return vals.sort((a,b) => {
-      if (a === "Before 2015") return -1;
-      if (b === "Before 2015") return 1;
-      return String(a).localeCompare(String(b), undefined, {numeric:true});
-    });
-  }
-  if (key === "JCFilter") {
-    return vals.sort((a,b) => {
-      const priority = v => v === "All BT" ? 0 : v === "All Promo" ? 1 : 2;
-      return priority(a) - priority(b) || String(a).localeCompare(String(b));
-    });
-  }
-  if (key === "Group") return vals.sort((a,b) => String(a).localeCompare(String(b), undefined, {numeric:true}));
-  return vals.sort();
-}
-
-function makeButtons(key, containerId) {
-  const container = document.getElementById(containerId);
-  container.innerHTML = "";
-  getOptions(key).forEach(value => {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "filter-btn" + (selected[key].has(value) ? " active" : "");
-    btn.textContent = value;
-    btn.addEventListener("click", () => {
-      if (selected[key].has(value)) { selected[key].delete(value); btn.classList.remove("active"); }
-      else { selected[key].add(value); btn.classList.add("active"); }
-      renderTable();
-    });
-    container.appendChild(btn);
-  });
-}
-
-function rebuildButtons() {
-  makeButtons("Group", "groupButtons");
-  makeButtons("YearFilter", "yearButtons");
-  makeButtons("JCFilter", "jcButtons");
-  makeButtons("Level", "levelButtons");
-}
-
-function selectedMatches(key, value) {
-  return selected[key].size === 0 || selected[key].has(value);
-}
-
-function matchesKeyword(record, keyword) {
-  if (!keyword) return true;
-  return Object.values(record).join(" ").toLowerCase().includes(keyword.toLowerCase());
-}
-
-function renderKeywords(text) {
-  const div = document.createElement("div");
-  (text || "").split(",").map(x => x.trim()).filter(Boolean).forEach(k => {
-    const span = document.createElement("span");
-    span.className = "tag";
-    span.textContent = k;
-    div.appendChild(span);
-  });
-  return div;
-}
-
-function renderTable() {
-  const filtered = data.filter(record =>
-    selectedMatches("YearFilter", record.YearFilter) &&
-    selectedMatches("JCFilter", record.JCFilter) &&
-    selectedMatches("Level", record.Level) &&
-    selectedMatches("Group", record.Group) &&
-    matchesKeyword(record, activeKeyword)
-  );
-
-  els.resultsBody.innerHTML = "";
-  filtered.forEach(record => {
-    const tr = document.createElement("tr");
-    ["Year", "JC", "Level", "Group"].forEach(field => {
-      const td = document.createElement("td");
-      td.textContent = record[field] || "";
-      tr.appendChild(td);
-    });
-
-    const kwTd = document.createElement("td");
-    kwTd.className = "keywords";
-    kwTd.appendChild(renderKeywords(record.Keywords));
-    tr.appendChild(kwTd);
-
-    const exTd = document.createElement("td");
-    exTd.className = "extracts";
-    exTd.textContent = record.Extracts || "";
-    tr.appendChild(exTd);
-
-    const qTd = document.createElement("td");
-    qTd.className = "question";
-    qTd.textContent = record.Question || "";
-    tr.appendChild(qTd);
-
-    const actionsTd = document.createElement("td");
-    actionsTd.className = "actions";
-
-    const editBtn = document.createElement("button");
-    editBtn.className = "light";
-    editBtn.textContent = "Edit";
-    editBtn.onclick = () => openEditor(record.id);
-    actionsTd.appendChild(editBtn);
-
-    if (!String(record.id).startsWith("base-")) {
-      const delBtn = document.createElement("button");
-      delBtn.className = "red";
-      delBtn.textContent = "Delete";
-      delBtn.onclick = () => deleteQuestion(record.id);
-      actionsTd.appendChild(delBtn);
-    }
-
-    tr.appendChild(actionsTd);
-    els.resultsBody.appendChild(tr);
-  });
-  els.count.textContent = filtered.length + " question(s) shown";
-}
-
-function openEditor(id=null) {
-  editingId = id;
-  const record = id ? data.find(r => r.id === id) : null;
-  els.editorTitle.textContent = id ? "Edit Question" : "Add Question";
-  document.getElementById("editYearFilter").value = record?.YearFilter || "";
-  document.getElementById("editYear").value = record?.Year || "";
-  document.getElementById("editJCFilter").value = record?.JCFilter || "";
-  document.getElementById("editJC").value = record?.JC || "";
-  document.getElementById("editLevel").value = record?.Level || "H2";
-  document.getElementById("editGroup").value = record?.Group || "";
-  document.getElementById("editKeywords").value = record?.Keywords || "";
-  document.getElementById("editExtracts").value = record?.Extracts || "";
-  document.getElementById("editQuestion").value = record?.Question || "";
-  document.getElementById("editAnswer").value = record?.Answer || "";
-  document.getElementById("editExaminerComments").value = record?.ExaminerComments || "";
-  els.aiStatus.textContent = "";
-  els.backdrop.style.display = "flex";
-}
-
-function closeEditor() {
-  els.backdrop.style.display = "none";
-  editingId = null;
-}
-
-function collectForm() {
-  const id = editingId && !String(editingId).startsWith("base-") ? editingId : "q-" + Date.now();
+function keywordString(value){ return asArrayKeywords(value).join(", "); }
+function cleanRecord(raw, sourceFile=""){
+  const r = raw || {};
   return {
-    id,
-    YearFilter: document.getElementById("editYearFilter").value.trim(),
-    Year: document.getElementById("editYear").value.trim(),
-    JCFilter: document.getElementById("editJCFilter").value.trim(),
-    JC: document.getElementById("editJC").value.trim(),
-    Level: document.getElementById("editLevel").value.trim(),
-    Group: document.getElementById("editGroup").value.trim(),
-    Keywords: document.getElementById("editKeywords").value.trim(),
-    Extracts: document.getElementById("editExtracts").value.trim(),
-    Question: document.getElementById("editQuestion").value.trim(),
-    Answer: document.getElementById("editAnswer").value.trim(),
-    ExaminerComments: document.getElementById("editExaminerComments").value.trim(),
-    Source: "Firebase"
+    Year: String(r.Year || r.year || "").trim(),
+    JC: String(r.JC || r.jc || "").trim(),
+    Level: String(r.Level || r.level || "").trim().toUpperCase(),
+    Group: String(r.Group || r.group || "").trim(),
+    Keywords: asArrayKeywords(r.Keywords || r.keywords),
+    Extracts: String(r.Extracts || r.extracts || "").trim(),
+    Question: String(r.Question || r.question || "").trim(),
+    Answer: String(r.Answer || r.answer || "").trim(),
+    ExaminerComments: String(r.ExaminerComments || r.examinerComments || r.ExaminerComment || "").trim(),
+    SourceFile: String(r.SourceFile || r.sourceFile || sourceFile || "").trim(),
+    Verified: Boolean(r.Verified || r.verified || false)
   };
 }
+function validateRecord(r){
+  const missing = [];
+  ["Year","JC","Level","Group","Question"].forEach(k => { if(!r[k]) missing.push(k); });
+  if(!["H1","H2"].includes(r.Level)) missing.push("Level must be H1 or H2");
+  return missing;
+}
+function truncate(s,n=220){ s = String(s||""); return s.length > n ? s.slice(0,n)+"..." : s; }
+function escapeHtml(s){
+  return String(s||"").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 
-async function saveQuestion() {
-  if (!firebaseReady) return alert("Firebase is not connected. Paste your Firebase config first.");
-  const record = collectForm();
-  if (!record.Question) return alert("Please enter a question.");
-
-  try {
-    await setDoc(doc(db, COLLECTION_NAME, record.id), { ...record, updatedAt: serverTimestamp() });
-    await loadFirebaseQuestions();
-    closeEditor();
-    setStatus("Saved to Firebase.", "ok");
-  } catch (err) {
-    console.error(err);
-    alert("Could not save to Firebase. Check Firestore rules.");
+async function initFirebase(){
+  try{
+    app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    firebaseOK = true;
+    el("firebaseStatus").textContent = "Connected to Firebase. Added/edited/imported questions will sync to Firestore.";
+    el("firebaseStatus").className = "status-ok";
+    await loadFirebase();
+  }catch(err){
+    firebaseOK = false;
+    el("firebaseStatus").textContent = "Firebase connection failed: " + err.message;
+    el("firebaseStatus").className = "status-bad";
   }
 }
 
-async function deleteQuestion(id) {
-  if (!firebaseReady) return alert("Firebase is not connected.");
-  if (!confirm("Delete this Firebase question?")) return;
-  try {
-    await deleteDoc(doc(db, COLLECTION_NAME, id));
-    await loadFirebaseQuestions();
-    setStatus("Deleted from Firebase.", "ok");
-  } catch (err) {
-    console.error(err);
-    alert("Could not delete from Firebase.");
-  }
+async function loadFirebase(){
+  if(!firebaseOK) return;
+  const snap = await getDocs(collection(db, "questions"));
+  questions = snap.docs.map(d => ({ id:d.id, ...cleanRecord(d.data()) }));
+  filtered = [...questions];
+  buildFilters();
+  renderResults();
 }
 
-async function callOpenRouter(messages, temperature=0.2) {
+function buildFilters(){
+  makeButtons("groupButtons", unique(["CSQ1","CSQ2","EQ1","EQ2","EQ3","EQ4","EQ5","EQ6","Others", ...questions.map(q=>q.Group)]), "group");
+  makeButtons("yearButtons", unique(["Before 2015","2015","2016","2017","2018","2019","2020","2021","2022","2023","2024","2025", ...questions.map(q=>q.Year)]), "year");
+  makeButtons("jcButtons", unique(["All BT","All Promo","ACJC","AJC","ASRJC","CJC","DHS","EJC","GCE","HCI","IJC","JJC","JPJC","MI","MJC","NJC","NYJC","PJC","RI","RVHS","SAJC","Spec","SRJC","TJC","TMJC","TPJC","VJC","YIJC","YJC", ...questions.map(q=>q.JC)]), "jc");
+  makeButtons("levelButtons", unique(["H1","H2", ...questions.map(q=>q.Level)]), "level");
+}
+function unique(arr){
+  return [...new Set(arr.filter(Boolean).map(String))].sort((a,b) => {
+    const na = parseInt(a), nb = parseInt(b);
+    if(!isNaN(na) && !isNaN(nb)) return na-nb;
+    return a.localeCompare(b);
+  });
+}
+function makeButtons(containerId, vals, type){
+  const box = el(containerId);
+  box.innerHTML = "";
+  vals.forEach(v => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "filter-btn" + (activeFilters[type]===v ? " active" : "");
+    b.textContent = v;
+    b.onclick = () => {
+      activeFilters[type] = activeFilters[type] === v ? null : v;
+      applyFilters();
+    };
+    box.appendChild(b);
+  });
+}
+
+function applyFilters(){
+  const kw = el("keywordInput").value.trim().toLowerCase();
+  filtered = questions.filter(q => {
+    const groupMatch = !activeFilters.group || q.Group === activeFilters.group || (activeFilters.group==="Others" && !/CSQ|EQ/.test(q.Group));
+    const yearMatch = !activeFilters.year || q.Year === activeFilters.year || String(q.Year).includes(activeFilters.year);
+    const jcMatch = !activeFilters.jc || q.JC === activeFilters.jc;
+    const levelMatch = !activeFilters.level || q.Level === activeFilters.level;
+    const hay = [
+      q.Year,q.JC,q.Level,q.Group,keywordString(q.Keywords),q.Extracts,q.Question,q.Answer,q.ExaminerComments,q.SourceFile
+    ].join(" ").toLowerCase();
+    const kwMatch = !kw || hay.includes(kw);
+    return groupMatch && yearMatch && jcMatch && levelMatch && kwMatch;
+  });
+  buildFilters();
+  renderResults();
+}
+
+function renderResults(){
+  const body = el("resultsBody");
+  body.innerHTML = "";
+  filtered.forEach(q => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${escapeHtml(q.Year)}</td>
+      <td>${escapeHtml(q.JC)}</td>
+      <td>${escapeHtml(q.Level)}</td>
+      <td>${escapeHtml(q.Group)}</td>
+      <td>${asArrayKeywords(q.Keywords).map(k=>`<span class="tag">${escapeHtml(k)}</span>`).join("")}</td>
+      <td class="extracts">${escapeHtml(truncate(q.Extracts, 260))}</td>
+      <td class="question">${escapeHtml(truncate(q.Question, 360))}</td>
+      <td class="question">${escapeHtml(truncate(q.Answer, 220))}</td>
+      <td class="question">${escapeHtml(truncate(q.ExaminerComments, 220))}</td>
+      <td><div class="actions">
+        <button class="light" data-act="edit" data-id="${q.id}">Edit</button>
+        <button class="red" data-act="delete" data-id="${q.id}">Delete</button>
+      </div></td>`;
+    body.appendChild(tr);
+  });
+  el("count").textContent = `${filtered.length} displayed / ${questions.length} total Firebase records.`;
+}
+
+document.addEventListener("click", async e => {
+  const btn = e.target.closest("button[data-act]");
+  if(!btn) return;
+  const id = btn.dataset.id;
+  if(btn.dataset.act === "edit") openEditor(id);
+  if(btn.dataset.act === "delete") {
+    if(confirm("Delete this question from Firebase?")){
+      await deleteDoc(doc(db, "questions", id));
+      await loadFirebase();
+    }
+  }
+});
+
+function openEditor(id=null){
+  currentEditId = id;
+  const q = id ? questions.find(x=>x.id===id) : cleanRecord({});
+  el("editorTitle").textContent = id ? "Edit Question" : "Add Question";
+  el("editYear").value = q.Year || "";
+  el("editJC").value = q.JC || "";
+  el("editLevel").value = q.Level || "H2";
+  el("editGroup").value = q.Group || "";
+  el("editKeywords").value = keywordString(q.Keywords);
+  el("editExtracts").value = q.Extracts || "";
+  el("editQuestion").value = q.Question || "";
+  el("editAnswer").value = q.Answer || "";
+  el("editExaminerComments").value = q.ExaminerComments || "";
+  el("editorBackdrop").style.display = "flex";
+}
+function closeEditor(){ el("editorBackdrop").style.display = "none"; currentEditId = null; }
+
+function getEditorRecord(){
+  return cleanRecord({
+    Year: el("editYear").value,
+    JC: el("editJC").value,
+    Level: el("editLevel").value,
+    Group: el("editGroup").value,
+    Keywords: el("editKeywords").value,
+    Extracts: el("editExtracts").value,
+    Question: el("editQuestion").value,
+    Answer: el("editAnswer").value,
+    ExaminerComments: el("editExaminerComments").value
+  });
+}
+async function saveEditor(){
+  const r = getEditorRecord();
+  const missing = validateRecord(r);
+  if(missing.length && !confirm("Missing/invalid fields: " + missing.join(", ") + ". Save anyway?")) return;
+  if(currentEditId){
+    await setDoc(doc(db, "questions", currentEditId), {...r, updatedAt: serverTimestamp()}, {merge:true});
+  }else{
+    await addDoc(collection(db, "questions"), {...r, createdAt: serverTimestamp(), updatedAt: serverTimestamp()});
+  }
+  closeEditor();
+  await loadFirebase();
+}
+
+async function callOpenRouter(messages, temperature=0.1){
   const res = await fetch("/api/openrouter", {
     method:"POST",
     headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({ model:OPENROUTER_MODEL, messages, temperature })
+    body:JSON.stringify({messages, temperature})
   });
-  if (!res.ok) {
-    let detail = "";
-    try { detail = (await res.json()).error || ""; } catch (_) {}
-    throw new Error("AI API error " + res.status + (detail ? ": " + detail : ""));
-  }
-  const json = await res.json();
-  return json.choices?.[0]?.message?.content?.trim() || "";
+  const text = await res.text();
+  if(!res.ok) throw new Error(text || `OpenRouter error ${res.status}`);
+  const data = JSON.parse(text);
+  return data.content || data.choices?.[0]?.message?.content || "";
 }
 
-async function generateAIKeywords() {
-  const question = document.getElementById("editQuestion").value.trim();
-  const extracts = document.getElementById("editExtracts").value.trim();
-  if (!question && !extracts) return alert("Enter the question or extract first.");
-  els.aiStatus.textContent = "Generating keywords...";
-  try {
-    const text = await callOpenRouter([
-      {role:"system",content:"You are an A-Level Economics teacher. Generate 5 to 8 concise economics keywords for exam question search. Return only comma-separated keywords. No explanation."},
-      {role:"user",content:"Question:\n"+question+"\n\nExtracts:\n"+extracts}
+async function generateKeywordsForEditor(){
+  try{
+    el("aiStatus").textContent = "Generating keywords...";
+    const r = getEditorRecord();
+    const content = `Question:\n${r.Question}\n\nExtracts:\n${r.Extracts}\n\nExisting keywords:\n${keywordString(r.Keywords)}`;
+    const out = await callOpenRouter([
+      {role:"system", content:"Generate 10-20 official A-Level Economics keywords. Output JSON array only."},
+      {role:"user", content}
     ]);
-    document.getElementById("editKeywords").value = text.replace(/^Keywords:\s*/i,"");
-    els.aiStatus.textContent = "Done.";
-  } catch (err) {
-    console.error(err);
-    els.aiStatus.textContent = "Failed. Check Vercel OPENROUTER_API_KEY environment variable and model.";
-  }
+    const arr = parseJsonFromAI(out);
+    el("editKeywords").value = Array.isArray(arr) ? arr.join(", ") : String(out).replace(/[\[\]"]/g,"");
+    el("aiStatus").textContent = "Keywords generated.";
+  }catch(err){ el("aiStatus").textContent = "AI failed: " + err.message; }
 }
 
-async function identifyExtractsAndQuestions() {
-  const fullText = document.getElementById("editQuestion").value.trim();
-  const existingExtracts = document.getElementById("editExtracts").value.trim();
-  if (!fullText && !existingExtracts) return alert("Paste the full case study text into Question first, or enter extracts.");
-
-  els.aiStatus.textContent = "Identifying extracts and questions...";
-  try {
-    const output = await callOpenRouter([
-      {
-        role:"system",
-        content:`You are an A-Level Economics teacher. Separate case study material into extracts and questions.
-Return valid JSON only with this structure:
-{
-  "extracts": "Extract 1...\n\nExtract 2...",
-  "questions": "(a)...\n(b)...",
-  "keywords": "keyword1, keyword2, keyword3"
-}
-If there are no extracts, leave extracts as an empty string. Do not invent content.`
-      },
-      {role:"user",content:"Text to separate:\n"+fullText+"\n\nExisting extracts if any:\n"+existingExtracts}
+async function identifyExtractsQuestionsForEditor(){
+  try{
+    el("aiStatus").textContent = "Processing text...";
+    const full = `${el("editExtracts").value}\n\n${el("editQuestion").value}`;
+    const out = await callOpenRouter([
+      {role:"system", content: PROCESSOR_PROMPT},
+      {role:"user", content: full}
     ]);
-    const cleaned = output.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/i, "").trim();
-    const parsed = JSON.parse(cleaned);
-    document.getElementById("editExtracts").value = parsed.extracts || "";
-    document.getElementById("editQuestion").value = parsed.questions || fullText;
-    if (parsed.keywords) document.getElementById("editKeywords").value = parsed.keywords;
-    els.aiStatus.textContent = "Done.";
-  } catch (err) {
-    console.error(err);
-    els.aiStatus.textContent = "Failed. AI output could not be parsed or API failed.";
-  }
-}
-
-function extractRecordsFromJson(json) {
-  if (Array.isArray(json)) return json;
-  if (Array.isArray(json.questions)) return json.questions;
-  if (Array.isArray(json.firebaseQuestions)) return json.firebaseQuestions;
-  if (Array.isArray(json.data)) return json.data;
-  throw new Error("JSON must be an array, or contain questions / firebaseQuestions / data array.");
-}
-
-function makeSafeId(text, fallback) {
-  const base = String(text || "").trim().toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 100);
-  return base || fallback;
-}
-
-function keywordArrayToText(value) {
-  if (Array.isArray(value)) return value.join("\n");
-  return String(value || "")
-    .split(",")
-    .map(x => x.trim())
-    .filter(Boolean)
-    .join("\n");
-}
-
-function keywordTextToCsv(value) {
-  return String(value || "")
-    .split(/[\n,]/)
-    .map(x => x.trim())
-    .filter(Boolean)
-    .join(", ");
-}
-
-function normalizeQuestionRecord(raw, index) {
-  const question = raw.Question ?? raw.question ?? raw.QuestionText ?? raw.questionText ?? "";
-  const year = raw.Year ?? raw.year ?? "";
-  const jc = raw.JC ?? raw.jc ?? raw.school ?? raw.School ?? "";
-  const level = raw.Level ?? raw.level ?? "H2";
-  const group = raw.Group ?? raw.group ?? raw.QuestionGroup ?? raw.questionGroup ?? "";
-  const keywords = raw.Keywords ?? raw.keywords ?? "";
-  const extracts = raw.Extracts ?? raw.extracts ?? raw.caseStudyExtracts ?? "";
-  const answer = raw.Answer ?? raw.answer ?? "";
-  const examinerComments = raw.ExaminerComments ?? raw.examinerComments ?? raw.ExaminerComment ?? raw.examinerComment ?? "";
-
-  const id = raw.id || raw.ID || makeSafeId([
-    year, jc, level, group, String(question).slice(0, 50)
-  ].filter(Boolean).join("-"), "import-" + Date.now() + "-" + index);
-
-  // Keep the schema clean: remove PaperType, QuestionNumber and Title even if they appear in uploaded JSON.
-  return {
-    id: String(id),
-    YearFilter: String(raw.YearFilter ?? raw.yearFilter ?? year ?? "").trim(),
-    Year: String(year ?? "").trim(),
-    JCFilter: String(raw.JCFilter ?? raw.jcFilter ?? jc ?? "").trim(),
-    JC: String(jc ?? "").trim(),
-    Level: String(level ?? "H2").trim(),
-    Group: String(group ?? "").trim(),
-    Keywords: keywordTextToCsv(keywordArrayToText(keywords)),
-    Extracts: String(extracts ?? "").trim(),
-    Question: String(question ?? "").trim(),
-    Answer: String(answer ?? "").trim(),
-    ExaminerComments: String(examinerComments ?? "").trim(),
-    Source: "Firebase"
-  };
-}
-
-async function readSelectedJsonFile() {
-  const fileInput = document.getElementById("jsonImportFile");
-  const file = fileInput.files?.[0];
-  if (!file) throw new Error("Choose a JSON file first.");
-  const text = await file.text();
-  return JSON.parse(text);
-}
-
-function stripRemovedFields(record) {
-  const copy = { ...record };
-  delete copy.PaperType;
-  delete copy.paperType;
-  delete copy.QuestionNumber;
-  delete copy.questionNumber;
-  delete copy.Title;
-  delete copy.title;
-  return copy;
-}
-
-function openImportEditor(index=0) {
-  if (!pendingImportRecords.length) return;
-  activeImportIndex = Math.max(0, Math.min(index, pendingImportRecords.length - 1));
-  renderImportTabs();
-  loadImportRecordToForm(activeImportIndex);
-  document.getElementById("importEditorBackdrop").style.display = "flex";
-}
-
-function closeImportEditor() {
-  saveImportFormToRecord();
-  document.getElementById("importEditorBackdrop").style.display = "none";
-  renderImportSummary();
-}
-
-function renderImportTabs() {
-  const tabs = document.getElementById("importRecordTabs");
-  tabs.innerHTML = "";
-  pendingImportRecords.forEach((r, i) => {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "import-record-tab" + (i === activeImportIndex ? " active" : "");
-    btn.textContent = `${i+1}. ${r.Group || "No group"}`;
-    btn.onclick = () => {
-      saveImportFormToRecord();
-      activeImportIndex = i;
-      renderImportTabs();
-      loadImportRecordToForm(i);
-    };
-    tabs.appendChild(btn);
-  });
-}
-
-function loadImportRecordToForm(index) {
-  const r = pendingImportRecords[index];
-  document.getElementById("importEditYear").value = r.Year || "";
-  document.getElementById("importEditJC").value = r.JC || "";
-  document.getElementById("importEditLevel").value = r.Level || "H2";
-  document.getElementById("importEditGroup").value = r.Group || "";
-  document.getElementById("importEditKeywords").value = keywordArrayToText(r.Keywords);
-  document.getElementById("importEditExtracts").value = r.Extracts || "";
-  document.getElementById("importEditQuestion").value = r.Question || "";
-  document.getElementById("importEditAnswer").value = r.Answer || "";
-  document.getElementById("importEditExaminerComments").value = r.ExaminerComments || "";
-  renderImportValidation();
-}
-
-function saveImportFormToRecord() {
-  if (!pendingImportRecords.length) return;
-  const r = pendingImportRecords[activeImportIndex];
-  r.Year = document.getElementById("importEditYear").value.trim();
-  r.YearFilter = r.Year;
-  r.JC = document.getElementById("importEditJC").value.trim();
-  r.JCFilter = r.JC;
-  r.Level = document.getElementById("importEditLevel").value.trim();
-  r.Group = document.getElementById("importEditGroup").value.trim();
-  r.Keywords = keywordTextToCsv(document.getElementById("importEditKeywords").value);
-  r.Extracts = document.getElementById("importEditExtracts").value.trim();
-  r.Question = document.getElementById("importEditQuestion").value.trim();
-  r.Answer = document.getElementById("importEditAnswer").value.trim();
-  r.ExaminerComments = document.getElementById("importEditExaminerComments").value.trim();
-  r.id = makeSafeId([r.Year, r.JC, r.Level, r.Group, String(r.Question).slice(0,50)].join("-"), r.id || "import-" + Date.now());
-  renderImportValidation();
-  renderImportTabs();
-  renderImportSummary();
-}
-
-function validateImportRecord(r) {
-  const issues = [];
-  if (!r.Year) issues.push("Missing Year");
-  if (!r.JC) issues.push("Missing JC");
-  if (!r.Level) issues.push("Missing Level");
-  if (!r.Group) issues.push("Missing Group");
-  if (!r.Question) issues.push("Missing Question");
-  if (!r.Keywords) issues.push("No Keywords");
-  return issues;
-}
-
-function renderImportValidation() {
-  if (!pendingImportRecords.length) return;
-  const current = {
-    Year: document.getElementById("importEditYear").value.trim(),
-    JC: document.getElementById("importEditJC").value.trim(),
-    Level: document.getElementById("importEditLevel").value.trim(),
-    Group: document.getElementById("importEditGroup").value.trim(),
-    Keywords: keywordTextToCsv(document.getElementById("importEditKeywords").value),
-    Question: document.getElementById("importEditQuestion").value.trim()
-  };
-  const issues = validateImportRecord(current);
-  document.getElementById("importValidation").textContent = issues.length
-    ? "⚠ Check before import:\n- " + issues.join("\n- ")
-    : "✓ Ready to import this record.";
-}
-
-function renderImportSummary() {
-  if (!pendingImportRecords.length) {
-    els.importPreview.style.display = "none";
-    els.importPreview.textContent = "";
-    return;
-  }
-  const sample = pendingImportRecords.map((r, i) => {
-    const issues = validateImportRecord(r);
-    const status = issues.length ? "⚠ " + issues.join(", ") : "✓ Ready";
-    const questionPreview = String(r.Question || "").slice(0, 300);
-    return `${i+1}. ${r.Year || "No year"} | ${r.JC || "No JC"} | ${r.Level || "No level"} | ${r.Group || "No group"}\n${status}\n${questionPreview}${String(r.Question || "").length > 300 ? "..." : ""}`;
-  }).join("\n\n");
-  els.importPreview.style.display = "block";
-  els.importPreview.textContent = sample;
-}
-
-async function previewJsonImport() {
-  try {
-    const json = await readSelectedJsonFile();
-    const records = extractRecordsFromJson(json)
-      .map((r, i) => normalizeQuestionRecord(stripRemovedFields(r), i))
-      .filter(r => r.Question || r.Extracts);
-    pendingImportRecords = records;
-    activeImportIndex = 0;
-    renderImportSummary();
-    els.importStatus.textContent = `Processed ${records.length} record(s). Review and edit before importing.`;
-    if (records.length) openImportEditor(0);
-  } catch (err) {
-    console.error(err);
-    pendingImportRecords = [];
-    els.importPreview.style.display = "block";
-    els.importPreview.textContent = "";
-    els.importStatus.textContent = "Import preview failed: " + err.message;
-  }
-}
-
-async function importJsonToFirebase() {
-  if (!firebaseReady) return alert("Firebase is not connected.");
-  if (!pendingImportRecords.length) {
-    await previewJsonImport();
-    if (!pendingImportRecords.length) return;
-  }
-  saveImportFormToRecord();
-  const invalid = pendingImportRecords
-    .map((r, i) => ({ i, issues: validateImportRecord(r) }))
-    .filter(x => x.issues.length);
-  if (invalid.length) {
-    const msg = invalid.slice(0, 8).map(x => `Record ${x.i+1}: ${x.issues.join(", ")}`).join("\n");
-    if (!confirm(`Some records have missing fields:\n\n${msg}\n\nImport anyway?`)) return;
-  }
-  if (!confirm(`Import ${pendingImportRecords.length} edited record(s) into Firebase? Existing documents with the same id will be overwritten.`)) return;
-
-  let success = 0;
-  let failed = 0;
-  els.importStatus.textContent = "Importing to Firebase...";
-
-  for (const record of pendingImportRecords) {
-    try {
-      const cleanRecord = stripRemovedFields(record);
-      await setDoc(doc(db, COLLECTION_NAME, cleanRecord.id), { ...cleanRecord, updatedAt: serverTimestamp() });
-      success++;
-      if (success % 50 === 0) els.importStatus.textContent = `Imported ${success}/${pendingImportRecords.length}...`;
-    } catch (err) {
-      console.error("Failed import", record, err);
-      failed++;
+    const parsed = parseJsonFromAI(out);
+    const first = Array.isArray(parsed) ? parsed[0] : parsed;
+    if(first){
+      const r = cleanRecord(first);
+      el("editYear").value = r.Year || el("editYear").value;
+      el("editJC").value = r.JC || el("editJC").value;
+      el("editLevel").value = r.Level || el("editLevel").value;
+      el("editGroup").value = r.Group || el("editGroup").value;
+      el("editKeywords").value = keywordString(r.Keywords) || el("editKeywords").value;
+      el("editExtracts").value = r.Extracts || el("editExtracts").value;
+      el("editQuestion").value = r.Question || el("editQuestion").value;
+      el("editAnswer").value = r.Answer || el("editAnswer").value;
+      el("editExaminerComments").value = r.ExaminerComments || el("editExaminerComments").value;
     }
+    el("aiStatus").textContent = "AI processing complete.";
+  }catch(err){ el("aiStatus").textContent = "AI failed: " + err.message; }
+}
+
+function parseJsonFromAI(text){
+  let s = String(text || "").trim();
+  s = s.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/i, "").trim();
+  try { return JSON.parse(s); } catch {}
+  const startArr = s.indexOf("[");
+  const endArr = s.lastIndexOf("]");
+  if(startArr !== -1 && endArr !== -1 && endArr > startArr) return JSON.parse(s.slice(startArr, endArr+1));
+  const startObj = s.indexOf("{");
+  const endObj = s.lastIndexOf("}");
+  if(startObj !== -1 && endObj !== -1 && endObj > startObj) return JSON.parse(s.slice(startObj, endObj+1));
+  throw new Error("AI did not return valid JSON.");
+}
+
+async function extractFileText(file){
+  const name = file.name.toLowerCase();
+  if(name.endsWith(".json") || name.endsWith(".txt")) return await file.text();
+
+  if(name.endsWith(".docx") || name.endsWith(".doc")){
+    const arrayBuffer = await file.arrayBuffer();
+    const result = await mammoth.extractRawText({arrayBuffer});
+    return result.value || "";
   }
 
-  await loadFirebaseQuestions();
-  els.importStatus.textContent = `Import completed. Success: ${success}. Failed: ${failed}.`;
-  document.getElementById("importEditorBackdrop").style.display = "none";
+  if(name.endsWith(".xlsx") || name.endsWith(".xls")){
+    const arrayBuffer = await file.arrayBuffer();
+    const wb = XLSX.read(arrayBuffer, {type:"array"});
+    let text = "";
+    wb.SheetNames.forEach(sn => {
+      text += `\n\n--- Sheet: ${sn} ---\n`;
+      text += XLSX.utils.sheet_to_csv(wb.Sheets[sn]);
+    });
+    return text;
+  }
+
+  if(name.endsWith(".pdf")){
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+    let text = "";
+    for(let p=1; p<=pdf.numPages; p++){
+      const page = await pdf.getPage(p);
+      const content = await page.getTextContent();
+      text += `\n\n--- Page ${p} ---\n` + content.items.map(i=>i.str).join(" ");
+    }
+    return text;
+  }
+
+  throw new Error("Unsupported file type: " + file.name);
 }
 
-function exportData() {
-  const payload = { exportedAt:new Date().toISOString(), firebaseQuestions };
-  const blob = new Blob([JSON.stringify(payload,null,2)], {type:"application/json"});
-  const url = URL.createObjectURL(blob);
+async function processUploadedFiles(){
+  const files = [...el("fileInput").files];
+  if(!files.length){ alert("Choose PDF, Word, Excel or JSON files first."); return; }
+
+  stagedRecords = [];
+  renderStaging();
+  el("uploadStatus").textContent = `Processing ${files.length} file(s)...`;
+  setProgress(0);
+
+  for(let i=0;i<files.length;i++){
+    const file = files[i];
+    try{
+      el("uploadStatus").textContent = `Processing ${i+1}/${files.length}: ${file.name}`;
+      const name = file.name.toLowerCase();
+      const text = await extractFileText(file);
+
+      if(name.endsWith(".json")){
+        const parsed = JSON.parse(text);
+        const arr = Array.isArray(parsed) ? parsed : [parsed];
+        arr.forEach(x => stagedRecords.push({...cleanRecord(x, file.name), _sourceMode:"JSON", _status:"Needs Review"}));
+      }else{
+        const out = await callOpenRouter([
+          {role:"system", content: PROCESSOR_PROMPT},
+          {role:"user", content:`SourceFile: ${file.name}\n\nDocument text:\n${text.slice(0, 120000)}`}
+        ]);
+        const parsed = parseJsonFromAI(out);
+        const arr = Array.isArray(parsed) ? parsed : [parsed];
+        arr.forEach(x => stagedRecords.push({...cleanRecord(x, file.name), _sourceMode:"AI", _status:"Needs Review"}));
+      }
+    }catch(err){
+      stagedRecords.push({...cleanRecord({SourceFile:file.name, Question:"PROCESSING ERROR: " + err.message}, file.name), _sourceMode:"ERROR", _status:"Error"});
+    }
+    setProgress(((i+1)/files.length)*100);
+    renderStaging();
+  }
+  el("uploadStatus").textContent = `Processed ${files.length} file(s). ${stagedRecords.length} record(s) staged. Review before import.`;
+}
+
+function setProgress(p){ el("progressBar").style.width = Math.max(0,Math.min(100,p)) + "%"; }
+
+function renderStaging(){
+  const area = el("stagingArea");
+  area.innerHTML = "";
+  if(!stagedRecords.length) return;
+
+  stagedRecords.forEach((r, idx) => {
+    const missing = validateRecord(r);
+    const card = document.createElement("div");
+    card.className = "preview-card";
+    card.innerHTML = `
+      <div class="preview-head">
+        <div>
+          <b>${idx+1}. ${escapeHtml(r.Year)} | ${escapeHtml(r.JC)} | ${escapeHtml(r.Level)} | ${escapeHtml(r.Group)}</b>
+          <span class="badge">${escapeHtml(r._sourceMode || "Staged")}</span>
+          <span class="badge">${escapeHtml(r._status || "Needs Review")}</span>
+        </div>
+        <div class="row">
+          <button class="light" data-review="${idx}">Review & Edit</button>
+          <button class="green" data-importone="${idx}">Import</button>
+          <button class="red" data-removestaged="${idx}">Remove</button>
+        </div>
+      </div>
+      ${missing.length ? `<div class="warning-card">Missing/invalid: ${escapeHtml(missing.join(", "))}</div>` : ""}
+      <div class="preview-summary"><b>Keywords:</b> ${escapeHtml(keywordString(r.Keywords))}
+
+<b>Question:</b>
+${escapeHtml(truncate(r.Question, 700))}
+
+<b>Extracts:</b>
+${escapeHtml(truncate(r.Extracts, 700))}</div>`;
+    area.appendChild(card);
+  });
+}
+
+document.addEventListener("click", async e => {
+  const review = e.target.closest("[data-review]");
+  const remove = e.target.closest("[data-removestaged]");
+  const importOne = e.target.closest("[data-importone]");
+  if(review) openReview(Number(review.dataset.review));
+  if(remove){
+    stagedRecords.splice(Number(remove.dataset.removestaged),1);
+    renderStaging();
+  }
+  if(importOne){
+    await importStagedRecord(Number(importOne.dataset.importone));
+  }
+});
+
+async function openReview(idx){
+  currentReviewIndex = idx;
+  const r = stagedRecords[idx];
+  el("reviewTitle").textContent = `Review & Edit Record ${idx+1}`;
+  el("reviewSubtext").textContent = `Source: ${r.SourceFile || "unknown"} | Mode: ${r._sourceMode || "unknown"}`;
+  el("reviewYear").value = r.Year || "";
+  el("reviewJC").value = r.JC || "";
+  el("reviewLevel").value = r.Level || "H2";
+  el("reviewGroup").value = r.Group || "";
+  el("reviewKeywords").value = keywordString(r.Keywords);
+  el("reviewExtracts").value = r.Extracts || "";
+  el("reviewQuestion").value = r.Question || "";
+  el("reviewAnswer").value = r.Answer || "";
+  el("reviewExaminerComments").value = r.ExaminerComments || "";
+  await showDuplicateWarning(r);
+  el("reviewBackdrop").style.display = "flex";
+}
+function closeReview(){ el("reviewBackdrop").style.display = "none"; currentReviewIndex = null; }
+
+function getReviewRecord(){
+  return cleanRecord({
+    Year: el("reviewYear").value,
+    JC: el("reviewJC").value,
+    Level: el("reviewLevel").value,
+    Group: el("reviewGroup").value,
+    Keywords: el("reviewKeywords").value,
+    Extracts: el("reviewExtracts").value,
+    Question: el("reviewQuestion").value,
+    Answer: el("reviewAnswer").value,
+    ExaminerComments: el("reviewExaminerComments").value,
+    SourceFile: currentReviewIndex !== null ? stagedRecords[currentReviewIndex].SourceFile : ""
+  });
+}
+async function saveReview(){
+  if(currentReviewIndex === null) return;
+  stagedRecords[currentReviewIndex] = {...stagedRecords[currentReviewIndex], ...getReviewRecord(), _status:"Reviewed"};
+  renderStaging();
+  await showDuplicateWarning(stagedRecords[currentReviewIndex]);
+}
+async function showDuplicateWarning(r){
+  const duplicate = findLocalDuplicate(r);
+  el("duplicateWarning").innerHTML = duplicate ? `<div class="warning-card"><b>Possible duplicate found:</b> ${escapeHtml(duplicate.Year)} | ${escapeHtml(duplicate.JC)} | ${escapeHtml(duplicate.Level)} | ${escapeHtml(duplicate.Group)}</div>` : "";
+}
+function findLocalDuplicate(r){
+  const qText = String(r.Question || "").trim().slice(0,160);
+  return questions.find(q => q.Year===r.Year && q.JC===r.JC && q.Level===r.Level && q.Group===r.Group && String(q.Question||"").includes(qText.slice(0,80)));
+}
+async function importStagedRecord(idx){
+  if(idx < 0 || idx >= stagedRecords.length) return;
+  const r = cleanRecord(stagedRecords[idx]);
+  const missing = validateRecord(r);
+  if(missing.length && !confirm("Missing/invalid fields: " + missing.join(", ") + ". Import anyway?")) return;
+  const dup = findLocalDuplicate(r);
+  if(dup && !confirm("Possible duplicate exists. Import anyway?")) return;
+  await addDoc(collection(db, "questions"), {...r, DateImported: new Date().toISOString(), Verified:false, createdAt: serverTimestamp(), updatedAt: serverTimestamp()});
+  stagedRecords[idx]._status = "Imported";
+  renderStaging();
+  await loadFirebase();
+}
+async function importReviewedRecords(){
+  if(!stagedRecords.length){ alert("No staged records to import."); return; }
+  let count = 0;
+  for(let i=0;i<stagedRecords.length;i++){
+    if(stagedRecords[i]._status === "Imported" || stagedRecords[i]._status === "Error") continue;
+    const r = cleanRecord(stagedRecords[i]);
+    const missing = validateRecord(r);
+    if(missing.length) continue;
+    await addDoc(collection(db, "questions"), {...r, DateImported: new Date().toISOString(), Verified:false, createdAt: serverTimestamp(), updatedAt: serverTimestamp()});
+    stagedRecords[i]._status = "Imported";
+    count++;
+  }
+  renderStaging();
+  await loadFirebase();
+  alert(`Imported ${count} reviewed/valid record(s).`);
+}
+
+function exportJSON(){
+  const data = filtered.map(q => cleanRecord(q));
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
   const a = document.createElement("a");
-  a.href = url;
-  a.download = "econs-question-bank-firebase-data.json";
+  a.href = URL.createObjectURL(blob);
+  a.download = "econs-question-bank-export.json";
   a.click();
-  URL.revokeObjectURL(url);
+  URL.revokeObjectURL(a.href);
 }
 
-document.getElementById("searchButton").onclick = () => { activeKeyword = els.keywordInput.value.trim(); renderTable(); };
-els.keywordInput.addEventListener("keydown", e => { if (e.key === "Enter") { activeKeyword = e.target.value.trim(); renderTable(); } });
-document.getElementById("resetButton").onclick = () => {
-  Object.keys(selected).forEach(k => selected[k].clear());
-  document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
-  els.keywordInput.value = ""; activeKeyword = ""; renderTable();
-};
-document.getElementById("addButton").onclick = () => openEditor();
-document.getElementById("syncButton").onclick = loadFirebaseQuestions;
-document.getElementById("exportButton").onclick = exportData;
-document.getElementById("previewJsonButton").onclick = previewJsonImport;
-document.getElementById("importJsonButton").onclick = importJsonToFirebase;
-document.getElementById("closeImportEditorButton").onclick = closeImportEditor;
-document.getElementById("saveImportEditButton").onclick = saveImportFormToRecord;
-document.getElementById("importEditedJsonButton").onclick = importJsonToFirebase;
-["importEditYear","importEditJC","importEditLevel","importEditGroup","importEditKeywords","importEditExtracts","importEditQuestion","importEditAnswer","importEditExaminerComments"].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener("input", renderImportValidation); });
-document.getElementById("cancelEditButton").onclick = closeEditor;
-document.getElementById("saveQuestionButton").onclick = saveQuestion;
-document.getElementById("aiKeywordsButton").onclick = generateAIKeywords;
-document.getElementById("aiExtractButton").onclick = identifyExtractsAndQuestions;
+el("processFilesButton").onclick = processUploadedFiles;
+el("importReviewedButton").onclick = importReviewedRecords;
+el("clearStagingButton").onclick = () => { stagedRecords = []; renderStaging(); el("uploadStatus").textContent = "Staging cleared."; setProgress(0); };
+el("searchButton").onclick = applyFilters;
+el("keywordInput").addEventListener("keydown", e => { if(e.key==="Enter") applyFilters(); });
+el("resetButton").onclick = () => { activeFilters={group:null,year:null,jc:null,level:null}; el("keywordInput").value=""; filtered=[...questions]; buildFilters(); renderResults(); };
+el("syncButton").onclick = loadFirebase;
+el("exportButton").onclick = exportJSON;
+el("addButton").onclick = () => openEditor(null);
+el("cancelEditButton").onclick = closeEditor;
+el("saveQuestionButton").onclick = saveEditor;
+el("aiKeywordsButton").onclick = generateKeywordsForEditor;
+el("aiExtractButton").onclick = identifyExtractsQuestionsForEditor;
+el("cancelReviewButton").onclick = closeReview;
+el("saveReviewButton").onclick = saveReview;
+el("importOneButton").onclick = async () => { await saveReview(); await importStagedRecord(currentReviewIndex); closeReview(); };
 
 initFirebase();
 </script>

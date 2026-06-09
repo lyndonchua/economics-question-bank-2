@@ -1,35 +1,41 @@
-# Economics Question Bank
+# Economics Question Bank V5
 
-Upload to GitHub and deploy with Vercel.
+## What this version supports
 
-## Files
-- `index.html` — main app shell with Firebase loading, editing, and JSON import
-- `api/openrouter.js` — Vercel API proxy for OpenRouter
-- `package.json` — Vercel helper file
-- `sample-questions-template.json` — sample JSON format
+- Upload PDF, Word, Excel, TXT, or JSON
+- PDF/DOCX/XLSX are converted to text in the browser
+- OpenRouter processes documents into clean JSON
+- Review & Edit before importing
+- JSON upload skips AI and goes directly to Review & Edit
+- Firebase Firestore is used as the permanent database
+- Clean schema only:
+  - Year
+  - JC
+  - Level
+  - Group
+  - Keywords
+  - Extracts
+  - Question
+  - Answer
+  - ExaminerComments
+  - SourceFile
+  - DateImported
+  - Verified
 
-## JSON schema
-Use only these fields:
+## Vercel Environment Variable
 
-```json
-{
-  "Year": "2025",
-  "JC": "SAJC",
-  "Level": "H2",
-  "Group": "FE/CSQ1",
-  "Keywords": ["Healthcare", "Positive Externalities"],
-  "Extracts": "...",
-  "Question": "...",
-  "Answer": "",
-  "ExaminerComments": ""
-}
-```
+Add this in Vercel:
 
-Do not use `PaperType`, `QuestionNumber`, or `Title`. The app will ignore/remove them during import.
+OPENROUTER_API_KEY = your OpenRouter key
 
-## Import workflow
-1. Open the app.
-2. Choose a JSON file.
-3. Click **Preview JSON**.
-4. Review and edit the full entry in the modal.
-5. Click **Import Edited Records to Firebase**.
+Then redeploy.
+
+## Firestore collection
+
+The app saves to:
+
+questions
+
+## Important
+
+Do not paste your OpenRouter API key into index.html.

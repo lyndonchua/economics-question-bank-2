@@ -1,9 +1,6 @@
 {
-  "name": "econs-question-bank",
-  "version": "1.0.0",
+  "name": "econs-question-bank-v5",
+  "version": "5.0.0",
   "private": true,
-  "scripts": {
-    "start": "vercel dev"
-  },
-  "dependencies": {}
+  "type": "module"
 }
