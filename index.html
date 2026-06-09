@@ -56,6 +56,19 @@ tr:nth-child(even) { background:#f9fafb; }
 .notice { background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; padding:10px; border-radius:10px; margin:10px 0; }
 .import-box { display:grid; grid-template-columns:minmax(220px,1fr) auto auto; gap:10px; align-items:center; margin-top:10px; }
 .import-preview { max-height:180px; overflow:auto; background:#f8fafc; border:1px solid #e5e7eb; border-radius:10px; padding:10px; white-space:pre-wrap; font-size:13px; color:#334155; margin-top:10px; }
+.import-modal .modal { width:min(1180px,98vw); }
+.import-record-tabs { display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 14px; }
+.import-record-tab { border:1px solid #c7cede; background:#f8fafc; color:#334155; padding:7px 10px; border-radius:999px; cursor:pointer; font-weight:bold; }
+.import-record-tab.active { background:var(--purple); color:white; border-color:var(--purple); }
+.import-edit-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+.import-edit-grid .full { grid-column:1/-1; }
+.import-edit-grid input,.import-edit-grid select,.import-edit-grid textarea { width:100%; }
+.import-edit-grid textarea { min-height:160px; }
+#importEditExtracts { min-height:280px; }
+#importEditQuestion { min-height:220px; }
+#importEditKeywords { min-height:110px; }
+.import-validation { background:#f8fafc; border:1px solid #e5e7eb; border-radius:10px; padding:10px; margin-top:10px; white-space:pre-wrap; font-size:13px; }
+@media (max-width:900px) { .import-edit-grid { grid-template-columns:1fr; } }
 @media (max-width:900px) { .controls,.form-grid { grid-template-columns:1fr; } }
 </style>
 </head>
@@ -135,6 +148,31 @@ tr:nth-child(even) { background:#f9fafb; }
   </div>
 </div>
 
+<div class="modal-backdrop import-modal" id="importEditorBackdrop">
+  <div class="modal">
+    <h2>Preview & Edit JSON Import</h2>
+    <div class="small">Review and edit each record before importing to Firebase. Only these fields are used: Year, JC, Level, Group, Keywords, Extracts, Question, Answer, Examiner Comments.</div>
+    <div id="importRecordTabs" class="import-record-tabs"></div>
+    <div class="import-edit-grid">
+      <div><label class="label">Year</label><input id="importEditYear" placeholder="e.g. 2025"></div>
+      <div><label class="label">JC</label><input id="importEditJC" placeholder="e.g. SAJC"></div>
+      <div><label class="label">Level</label><select id="importEditLevel"><option value="H1">H1</option><option value="H2">H2</option></select></div>
+      <div><label class="label">Group</label><input id="importEditGroup" placeholder="e.g. FE/CSQ1, CT/EQ1"></div>
+      <div class="full"><label class="label">Keywords, one per line or comma-separated</label><textarea id="importEditKeywords"></textarea></div>
+      <div class="full"><label class="label">Extracts / Case Study Material</label><textarea id="importEditExtracts"></textarea></div>
+      <div class="full"><label class="label">Question</label><textarea id="importEditQuestion"></textarea></div>
+      <div class="full"><label class="label">Answer</label><textarea id="importEditAnswer" placeholder="Optional"></textarea></div>
+      <div class="full"><label class="label">Examiner Comments</label><textarea id="importEditExaminerComments" placeholder="Optional"></textarea></div>
+    </div>
+    <div id="importValidation" class="import-validation"></div>
+    <div class="modal-actions">
+      <button class="secondary" id="closeImportEditorButton" type="button">Close</button>
+      <button class="light" id="saveImportEditButton" type="button">Save Current Edit</button>
+      <button class="green" id="importEditedJsonButton" type="button">Import Edited Records to Firebase</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getFirestore, collection, getDocs, setDoc, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
@@ -165,6 +203,7 @@ let data = [];
 let db = null;
 let firebaseReady = false;
 let pendingImportRecords = [];
+let activeImportIndex = 0;
 
 const selected = { YearFilter:new Set(), JCFilter:new Set(), Level:new Set(), Group:new Set() };
 let activeKeyword = "";
@@ -485,8 +524,25 @@ function makeSafeId(text, fallback) {
   const base = String(text || "").trim().toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
-    .slice(0, 80);
+    .slice(0, 100);
   return base || fallback;
+}
+
+function keywordArrayToText(value) {
+  if (Array.isArray(value)) return value.join("\n");
+  return String(value || "")
+    .split(",")
+    .map(x => x.trim())
+    .filter(Boolean)
+    .join("\n");
+}
+
+function keywordTextToCsv(value) {
+  return String(value || "")
+    .split(/[\n,]/)
+    .map(x => x.trim())
+    .filter(Boolean)
+    .join(", ");
 }
 
 function normalizeQuestionRecord(raw, index) {
@@ -497,11 +553,14 @@ function normalizeQuestionRecord(raw, index) {
   const group = raw.Group ?? raw.group ?? raw.QuestionGroup ?? raw.questionGroup ?? "";
   const keywords = raw.Keywords ?? raw.keywords ?? "";
   const extracts = raw.Extracts ?? raw.extracts ?? raw.caseStudyExtracts ?? "";
+  const answer = raw.Answer ?? raw.answer ?? "";
+  const examinerComments = raw.ExaminerComments ?? raw.examinerComments ?? raw.ExaminerComment ?? raw.examinerComment ?? "";
 
   const id = raw.id || raw.ID || makeSafeId([
-    year, jc, level, group, String(question).slice(0, 40)
+    year, jc, level, group, String(question).slice(0, 50)
   ].filter(Boolean).join("-"), "import-" + Date.now() + "-" + index);
 
+  // Keep the schema clean: remove PaperType, QuestionNumber and Title even if they appear in uploaded JSON.
   return {
     id: String(id),
     YearFilter: String(raw.YearFilter ?? raw.yearFilter ?? year ?? "").trim(),
@@ -510,9 +569,11 @@ function normalizeQuestionRecord(raw, index) {
     JC: String(jc ?? "").trim(),
     Level: String(level ?? "H2").trim(),
     Group: String(group ?? "").trim(),
-    Keywords: Array.isArray(keywords) ? keywords.join(", ") : String(keywords ?? "").trim(),
+    Keywords: keywordTextToCsv(keywordArrayToText(keywords)),
     Extracts: String(extracts ?? "").trim(),
     Question: String(question ?? "").trim(),
+    Answer: String(answer ?? "").trim(),
+    ExaminerComments: String(examinerComments ?? "").trim(),
     Source: "Firebase"
   };
 }
@@ -525,21 +586,137 @@ async function readSelectedJsonFile() {
   return JSON.parse(text);
 }
 
+function stripRemovedFields(record) {
+  const copy = { ...record };
+  delete copy.PaperType;
+  delete copy.paperType;
+  delete copy.QuestionNumber;
+  delete copy.questionNumber;
+  delete copy.Title;
+  delete copy.title;
+  return copy;
+}
+
+function openImportEditor(index=0) {
+  if (!pendingImportRecords.length) return;
+  activeImportIndex = Math.max(0, Math.min(index, pendingImportRecords.length - 1));
+  renderImportTabs();
+  loadImportRecordToForm(activeImportIndex);
+  document.getElementById("importEditorBackdrop").style.display = "flex";
+}
+
+function closeImportEditor() {
+  saveImportFormToRecord();
+  document.getElementById("importEditorBackdrop").style.display = "none";
+  renderImportSummary();
+}
+
+function renderImportTabs() {
+  const tabs = document.getElementById("importRecordTabs");
+  tabs.innerHTML = "";
+  pendingImportRecords.forEach((r, i) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "import-record-tab" + (i === activeImportIndex ? " active" : "");
+    btn.textContent = `${i+1}. ${r.Group || "No group"}`;
+    btn.onclick = () => {
+      saveImportFormToRecord();
+      activeImportIndex = i;
+      renderImportTabs();
+      loadImportRecordToForm(i);
+    };
+    tabs.appendChild(btn);
+  });
+}
+
+function loadImportRecordToForm(index) {
+  const r = pendingImportRecords[index];
+  document.getElementById("importEditYear").value = r.Year || "";
+  document.getElementById("importEditJC").value = r.JC || "";
+  document.getElementById("importEditLevel").value = r.Level || "H2";
+  document.getElementById("importEditGroup").value = r.Group || "";
+  document.getElementById("importEditKeywords").value = keywordArrayToText(r.Keywords);
+  document.getElementById("importEditExtracts").value = r.Extracts || "";
+  document.getElementById("importEditQuestion").value = r.Question || "";
+  document.getElementById("importEditAnswer").value = r.Answer || "";
+  document.getElementById("importEditExaminerComments").value = r.ExaminerComments || "";
+  renderImportValidation();
+}
+
+function saveImportFormToRecord() {
+  if (!pendingImportRecords.length) return;
+  const r = pendingImportRecords[activeImportIndex];
+  r.Year = document.getElementById("importEditYear").value.trim();
+  r.YearFilter = r.Year;
+  r.JC = document.getElementById("importEditJC").value.trim();
+  r.JCFilter = r.JC;
+  r.Level = document.getElementById("importEditLevel").value.trim();
+  r.Group = document.getElementById("importEditGroup").value.trim();
+  r.Keywords = keywordTextToCsv(document.getElementById("importEditKeywords").value);
+  r.Extracts = document.getElementById("importEditExtracts").value.trim();
+  r.Question = document.getElementById("importEditQuestion").value.trim();
+  r.Answer = document.getElementById("importEditAnswer").value.trim();
+  r.ExaminerComments = document.getElementById("importEditExaminerComments").value.trim();
+  r.id = makeSafeId([r.Year, r.JC, r.Level, r.Group, String(r.Question).slice(0,50)].join("-"), r.id || "import-" + Date.now());
+  renderImportValidation();
+  renderImportTabs();
+  renderImportSummary();
+}
+
+function validateImportRecord(r) {
+  const issues = [];
+  if (!r.Year) issues.push("Missing Year");
+  if (!r.JC) issues.push("Missing JC");
+  if (!r.Level) issues.push("Missing Level");
+  if (!r.Group) issues.push("Missing Group");
+  if (!r.Question) issues.push("Missing Question");
+  if (!r.Keywords) issues.push("No Keywords");
+  return issues;
+}
+
+function renderImportValidation() {
+  if (!pendingImportRecords.length) return;
+  const current = {
+    Year: document.getElementById("importEditYear").value.trim(),
+    JC: document.getElementById("importEditJC").value.trim(),
+    Level: document.getElementById("importEditLevel").value.trim(),
+    Group: document.getElementById("importEditGroup").value.trim(),
+    Keywords: keywordTextToCsv(document.getElementById("importEditKeywords").value),
+    Question: document.getElementById("importEditQuestion").value.trim()
+  };
+  const issues = validateImportRecord(current);
+  document.getElementById("importValidation").textContent = issues.length
+    ? "⚠ Check before import:\n- " + issues.join("\n- ")
+    : "✓ Ready to import this record.";
+}
+
+function renderImportSummary() {
+  if (!pendingImportRecords.length) {
+    els.importPreview.style.display = "none";
+    els.importPreview.textContent = "";
+    return;
+  }
+  const sample = pendingImportRecords.map((r, i) => {
+    const issues = validateImportRecord(r);
+    const status = issues.length ? "⚠ " + issues.join(", ") : "✓ Ready";
+    const questionPreview = String(r.Question || "").slice(0, 300);
+    return `${i+1}. ${r.Year || "No year"} | ${r.JC || "No JC"} | ${r.Level || "No level"} | ${r.Group || "No group"}\n${status}\n${questionPreview}${String(r.Question || "").length > 300 ? "..." : ""}`;
+  }).join("\n\n");
+  els.importPreview.style.display = "block";
+  els.importPreview.textContent = sample;
+}
+
 async function previewJsonImport() {
   try {
     const json = await readSelectedJsonFile();
     const records = extractRecordsFromJson(json)
-      .map(normalizeQuestionRecord)
-      .filter(r => r.Question);
+      .map((r, i) => normalizeQuestionRecord(stripRemovedFields(r), i))
+      .filter(r => r.Question || r.Extracts);
     pendingImportRecords = records;
-
-    const sample = records.slice(0, 5).map((r, i) =>
-      `${i+1}. ${r.Year || "No year"} | ${r.JC || "No JC"} | ${r.Level || "No level"} | ${r.Group || "No group"}\n${r.Question.slice(0, 220)}${r.Question.length > 220 ? "..." : ""}`
-    ).join("\n\n");
-
-    els.importPreview.style.display = "block";
-    els.importPreview.textContent = sample || "No valid questions found.";
-    els.importStatus.textContent = `Processed ${records.length} valid question(s). Click Import to Firebase when ready.`;
+    activeImportIndex = 0;
+    renderImportSummary();
+    els.importStatus.textContent = `Processed ${records.length} record(s). Review and edit before importing.`;
+    if (records.length) openImportEditor(0);
   } catch (err) {
     console.error(err);
     pendingImportRecords = [];
@@ -555,7 +732,15 @@ async function importJsonToFirebase() {
     await previewJsonImport();
     if (!pendingImportRecords.length) return;
   }
-  if (!confirm(`Import ${pendingImportRecords.length} question(s) into Firebase? Existing documents with the same id will be overwritten.`)) return;
+  saveImportFormToRecord();
+  const invalid = pendingImportRecords
+    .map((r, i) => ({ i, issues: validateImportRecord(r) }))
+    .filter(x => x.issues.length);
+  if (invalid.length) {
+    const msg = invalid.slice(0, 8).map(x => `Record ${x.i+1}: ${x.issues.join(", ")}`).join("\n");
+    if (!confirm(`Some records have missing fields:\n\n${msg}\n\nImport anyway?`)) return;
+  }
+  if (!confirm(`Import ${pendingImportRecords.length} edited record(s) into Firebase? Existing documents with the same id will be overwritten.`)) return;
 
   let success = 0;
   let failed = 0;
@@ -563,7 +748,8 @@ async function importJsonToFirebase() {
 
   for (const record of pendingImportRecords) {
     try {
-      await setDoc(doc(db, COLLECTION_NAME, record.id), { ...record, updatedAt: serverTimestamp() });
+      const cleanRecord = stripRemovedFields(record);
+      await setDoc(doc(db, COLLECTION_NAME, cleanRecord.id), { ...cleanRecord, updatedAt: serverTimestamp() });
       success++;
       if (success % 50 === 0) els.importStatus.textContent = `Imported ${success}/${pendingImportRecords.length}...`;
     } catch (err) {
@@ -574,6 +760,7 @@ async function importJsonToFirebase() {
 
   await loadFirebaseQuestions();
   els.importStatus.textContent = `Import completed. Success: ${success}. Failed: ${failed}.`;
+  document.getElementById("importEditorBackdrop").style.display = "none";
 }
 
 function exportData() {
@@ -599,6 +786,10 @@ document.getElementById("syncButton").onclick = loadFirebaseQuestions;
 document.getElementById("exportButton").onclick = exportData;
 document.getElementById("previewJsonButton").onclick = previewJsonImport;
 document.getElementById("importJsonButton").onclick = importJsonToFirebase;
+document.getElementById("closeImportEditorButton").onclick = closeImportEditor;
+document.getElementById("saveImportEditButton").onclick = saveImportFormToRecord;
+document.getElementById("importEditedJsonButton").onclick = importJsonToFirebase;
+["importEditYear","importEditJC","importEditLevel","importEditGroup","importEditKeywords","importEditExtracts","importEditQuestion","importEditAnswer","importEditExaminerComments"].forEach(id => { const el = document.getElementById(id); if (el) el.addEventListener("input", renderImportValidation); });
 document.getElementById("cancelEditButton").onclick = closeEditor;
 document.getElementById("saveQuestionButton").onclick = saveQuestion;
 document.getElementById("aiKeywordsButton").onclick = generateAIKeywords;
