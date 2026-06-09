@@ -1,1 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Economics Question Bank - Firebase AI Extracts</title>
+<style>
+:root {
+  --blue:#1f4ea3; --light:#f4f6fb; --border:#d6dbe6; --text:#1f2937; --muted:#64748b;
+  --green:#15803d; --red:#b91c1c; --orange:#ea580c; --purple:#7c3aed;
+}
+* { box-sizing:border-box; }
+body { font-family:Arial,sans-serif; margin:0; padding:24px; background:var(--light); color:var(--text); }
+h1 { margin:0 0 16px; color:#102a5c; font-size:2.2rem; }
+.panel { background:white; border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:16px; box-shadow:0 4px 14px rgba(0,0,0,.06); }
+.filters-panel { max-height:38vh; overflow-y:auto; }
+.filter-section { margin-bottom:10px; }
+.filter-title { font-weight:bold; margin-bottom:6px; color:#334155; font-size:1.02rem; }
+.button-group { display:flex; flex-wrap:wrap; gap:6px; }
+.filter-btn { border:1px solid #c7cede; background:#f8fafc; color:#334155; padding:6px 10px; border-radius:999px; cursor:pointer; font-size:13px; }
+.filter-btn.active { background:var(--blue); color:white; border-color:var(--blue); }
+.controls { display:grid; grid-template-columns:minmax(220px,1fr) repeat(5,auto); gap:10px; margin-top:10px; align-items:center; }
+input, select, textarea, button { padding:10px; border-radius:10px; border:1px solid #c7cede; font-size:14px; font-family:Arial,sans-serif; }
+textarea { min-height:120px; resize:vertical; }
+button { cursor:pointer; font-weight:bold; }
+button.main { background:var(--blue); color:white; border:none; }
+button.secondary { background:#64748b; color:white; border:none; }
+button.green { background:var(--green); color:white; border:none; }
+button.red { background:var(--red); color:white; border:none; }
+button.orange { background:var(--orange); color:white; border:none; }
+button.purple { background:var(--purple); color:white; border:none; }
+button.light { background:#f8fafc; color:#334155; border:1px solid #c7cede; }
+#count, #firebaseStatus { font-weight:bold; margin-top:12px; }
+.status-ok { color:var(--green); }
+.status-warn { color:var(--orange); }
+.status-bad { color:var(--red); }
+.table-wrap { max-height:58vh; overflow:auto; }
+table { width:100%; border-collapse:collapse; background:white; min-width:1250px; }
+th,td { border-bottom:1px solid #e5e7eb; padding:10px; text-align:left; vertical-align:top; }
+th { background:var(--blue); color:white; position:sticky; top:0; z-index:1; }
+tr:nth-child(even) { background:#f9fafb; }
+.question { white-space:pre-wrap; line-height:1.4; min-width:360px; }
+.extracts { white-space:pre-wrap; line-height:1.4; min-width:300px; color:#334155; background:#f8fafc; border-radius:10px; padding:8px; }
+.keywords { line-height:1.6; min-width:170px; }
+.tag { display:inline-block; background:#e8f0ff; color:#1f4ea3; border:1px solid #c8dcff; padding:2px 7px; border-radius:999px; margin:2px; font-size:12px; }
+.actions { display:flex; gap:6px; flex-wrap:wrap; min-width:140px; }
+.small { color:var(--muted); font-size:13px; }
+.modal-backdrop { display:none; position:fixed; inset:0; background:rgba(15,23,42,.55); z-index:10; align-items:center; justify-content:center; padding:20px; }
+.modal { background:white; width:min(1000px,96vw); max-height:92vh; overflow:auto; border-radius:16px; padding:18px; box-shadow:0 20px 60px rgba(0,0,0,.25); }
+.modal h2 { margin-top:0; color:#102a5c; }
+.form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.form-grid .full { grid-column:1/-1; }
+.label { font-weight:bold; font-size:13px; display:block; margin-bottom:5px; color:#334155; }
+.form-grid input,.form-grid select,.form-grid textarea { width:100%; }
+.modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:14px; flex-wrap:wrap; }
+.notice { background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; padding:10px; border-radius:10px; margin:10px 0; }
+@media (max-width:900px) { .controls,.form-grid { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<h1>Economics Question Bank</h1>
 
+<div class="panel">
+  <div class="filter-title">Firebase Status</div>
+  <div id="firebaseStatus" class="status-warn">Checking Firebase connection...</div>
+  <div class="small">Added/edited questions and extracted CSQ data will save to Firestore collection: <b>questions</b>.</div>
+</div>
+
+<div class="panel filters-panel">
+  <div class="filter-section"><div class="filter-title">Question Group</div><div class="button-group" id="groupButtons"></div></div>
+  <div class="filter-section"><div class="filter-title">Year</div><div class="button-group" id="yearButtons"></div></div>
+  <div class="filter-section"><div class="filter-title">JC</div><div class="button-group" id="jcButtons"></div></div>
+  <div class="filter-section"><div class="filter-title">Level</div><div class="button-group" id="levelButtons"></div></div>
+  <div class="controls">
+    <input id="keywordInput" type="text" placeholder="Search keyword, question, extract, JC, year...">
+    <button class="main" id="searchButton" type="button">Search</button>
+    <button class="secondary" id="resetButton" type="button">Reset</button>
+    <button class="green" id="addButton" type="button">+ Add Question</button>
+    <button class="orange" id="syncButton" type="button">Reload Firebase</button>
+    <button class="light" id="exportButton" type="button">Export JSON</button>
+  </div>
+  <div id="count"></div>
+</div>
+
+<div class="panel table-wrap">
+  <table>
+    <thead><tr><th>Year</th><th>JC</th><th>Level</th><th>Group</th><th>Keywords</th><th>Extracts</th><th>Question</th><th>Actions</th></tr></thead>
+    <tbody id="resultsBody"></tbody>
+  </table>
+</div>
+
+<div class="modal-backdrop" id="editorBackdrop">
+  <div class="modal">
+    <h2 id="editorTitle">Add Question</h2>
+
+    <div class="notice">
+      OpenRouter API key is stored safely in Vercel Environment Variables. Do not paste the AI key into this HTML file.
+    </div>
+
+    <div class="form-grid">
+      <div><label class="label">Year Filter Button</label><input id="editYearFilter" placeholder="e.g. 2025 or Before 2015"></div>
+      <div><label class="label">Year Display</label><input id="editYear" placeholder="e.g. 2025 or Before 2015 (2014)"></div>
+      <div><label class="label">JC Filter Button</label><input id="editJCFilter" placeholder="e.g. CJC, All Promo, All BT"></div>
+      <div><label class="label">JC Display</label><input id="editJC" placeholder="e.g. CJC or All Promo (SAJC FE)"></div>
+      <div><label class="label">Level</label><select id="editLevel"><option value="H1">H1</option><option value="H2">H2</option></select></div>
+      <div><label class="label">Question Group</label><input id="editGroup" placeholder="e.g. CSQ1, EQ1, EQ2"></div>
+      <div class="full"><label class="label">Keywords</label><input id="editKeywords" placeholder="e.g. Inflation, ADAS, Fiscal Policy"></div>
+      <div class="full">
+        <button class="main" id="aiKeywordsButton" type="button">Generate Keywords with AI</button>
+        <button class="purple" id="aiExtractButton" type="button">AI Identify Extracts + Questions</button>
+        <span class="small" id="aiStatus"></span>
+      </div>
+      <div class="full"><label class="label">Extracts / Case Study Material</label><textarea id="editExtracts" placeholder="For case studies, paste extracts here or let AI identify them from the full text."></textarea></div>
+      <div class="full"><label class="label">Question</label><textarea id="editQuestion" placeholder="Paste or type the question here. For CSQ, you may paste the full case text and let AI split extracts/questions."></textarea></div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="secondary" id="cancelEditButton" type="button">Cancel</button>
+      <button class="green" id="saveQuestionButton" type="button">Save to Firebase</button>
+    </div>
+  </div>
+</div>
+
+<script src="questions-data.js"></script>
+
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { getFirestore, collection, getDocs, setDoc, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+/* =========================
+   CONFIG SECTION
+   1. Paste Firebase config
+   2. Add OPENROUTER_API_KEY in Vercel Environment Variables
+========================= */
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBUgKdY5Rj3IfN2hrdXm2inCI2DkHvQ9ik",
+  authDomain: "economics-question-bank.firebaseapp.com",
+  projectId: "economics-question-bank",
+  storageBucket: "economics-question-bank.firebasestorage.app",
+  messagingSenderId: "721758535915",
+  appId: "1:721758535915:web:0c6d2c4a12a6000bca7eae"
+};
+
+const OPENROUTER_MODEL = "openai/gpt-4o-mini";
+
+const COLLECTION_NAME = "questions";
+
+/* ========================= */
+
+const baseData = window.BASE_QUESTIONS_DATA || [];
+let firebaseQuestions = [];
+let data = [...baseData];
+let db = null;
+let firebaseReady = false;
+
+const selected = { YearFilter:new Set(), JCFilter:new Set(), Level:new Set(), Group:new Set() };
+let activeKeyword = "";
+let editingId = null;
+
+const els = {
+  status: document.getElementById("firebaseStatus"),
+  resultsBody: document.getElementById("resultsBody"),
+  count: document.getElementById("count"),
+  keywordInput: document.getElementById("keywordInput"),
+  backdrop: document.getElementById("editorBackdrop"),
+  editorTitle: document.getElementById("editorTitle"),
+  aiStatus: document.getElementById("aiStatus")
+};
+
+function setStatus(text, type="warn") {
+  els.status.textContent = text;
+  els.status.className = type === "ok" ? "status-ok" : type === "bad" ? "status-bad" : "status-warn";
+}
+
+async function initFirebase() {
+  try {
+    if (firebaseConfig.apiKey.startsWith("PASTE_") || firebaseConfig.projectId.startsWith("PASTE_")) {
+      setStatus("Firebase config not pasted yet. App is view-only until you add your Firebase config.", "warn");
+      rebuildData();
+      return;
+    }
+    const app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    firebaseReady = true;
+    await loadFirebaseQuestions();
+    setStatus("Connected to Firebase. Added/edited questions will sync to Firestore.", "ok");
+  } catch (err) {
+    console.error(err);
+    setStatus("Firebase connection failed. Check config and Firestore rules.", "bad");
+    rebuildData();
+  }
+}
+
+async function loadFirebaseQuestions() {
+  if (!firebaseReady) return;
+  const snap = await getDocs(collection(db, COLLECTION_NAME));
+  firebaseQuestions = [];
+  snap.forEach(d => firebaseQuestions.push({ id:d.id, ...d.data(), Source:"Firebase" }));
+  rebuildData();
+}
+
+function rebuildData() {
+  data = [...baseData, ...firebaseQuestions];
+  rebuildButtons();
+  renderTable();
+}
+
+function getOptions(key) {
+  const vals = [...new Set(data.map(r => r[key]).filter(Boolean))];
+  if (key === "YearFilter") {
+    return vals.sort((a,b) => {
+      if (a === "Before 2015") return -1;
+      if (b === "Before 2015") return 1;
+      return String(a).localeCompare(String(b), undefined, {numeric:true});
+    });
+  }
+  if (key === "JCFilter") {
+    return vals.sort((a,b) => {
+      const priority = v => v === "All BT" ? 0 : v === "All Promo" ? 1 : 2;
+      return priority(a) - priority(b) || String(a).localeCompare(String(b));
+    });
+  }
+  if (key === "Group") return vals.sort((a,b) => String(a).localeCompare(String(b), undefined, {numeric:true}));
+  return vals.sort();
+}
+
+function makeButtons(key, containerId) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = "";
+  getOptions(key).forEach(value => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "filter-btn" + (selected[key].has(value) ? " active" : "");
+    btn.textContent = value;
+    btn.addEventListener("click", () => {
+      if (selected[key].has(value)) { selected[key].delete(value); btn.classList.remove("active"); }
+      else { selected[key].add(value); btn.classList.add("active"); }
+      renderTable();
+    });
+    container.appendChild(btn);
+  });
+}
+
+function rebuildButtons() {
+  makeButtons("Group", "groupButtons");
+  makeButtons("YearFilter", "yearButtons");
+  makeButtons("JCFilter", "jcButtons");
+  makeButtons("Level", "levelButtons");
+}
+
+function selectedMatches(key, value) {
+  return selected[key].size === 0 || selected[key].has(value);
+}
+
+function matchesKeyword(record, keyword) {
+  if (!keyword) return true;
+  return Object.values(record).join(" ").toLowerCase().includes(keyword.toLowerCase());
+}
+
+function renderKeywords(text) {
+  const div = document.createElement("div");
+  (text || "").split(",").map(x => x.trim()).filter(Boolean).forEach(k => {
+    const span = document.createElement("span");
+    span.className = "tag";
+    span.textContent = k;
+    div.appendChild(span);
+  });
+  return div;
+}
+
+function renderTable() {
+  const filtered = data.filter(record =>
+    selectedMatches("YearFilter", record.YearFilter) &&
+    selectedMatches("JCFilter", record.JCFilter) &&
+    selectedMatches("Level", record.Level) &&
+    selectedMatches("Group", record.Group) &&
+    matchesKeyword(record, activeKeyword)
+  );
+
+  els.resultsBody.innerHTML = "";
+  filtered.forEach(record => {
+    const tr = document.createElement("tr");
+    ["Year", "JC", "Level", "Group"].forEach(field => {
+      const td = document.createElement("td");
+      td.textContent = record[field] || "";
+      tr.appendChild(td);
+    });
+
+    const kwTd = document.createElement("td");
+    kwTd.className = "keywords";
+    kwTd.appendChild(renderKeywords(record.Keywords));
+    tr.appendChild(kwTd);
+
+    const exTd = document.createElement("td");
+    exTd.className = "extracts";
+    exTd.textContent = record.Extracts || "";
+    tr.appendChild(exTd);
+
+    const qTd = document.createElement("td");
+    qTd.className = "question";
+    qTd.textContent = record.Question || "";
+    tr.appendChild(qTd);
+
+    const actionsTd = document.createElement("td");
+    actionsTd.className = "actions";
+
+    const editBtn = document.createElement("button");
+    editBtn.className = "light";
+    editBtn.textContent = "Edit";
+    editBtn.onclick = () => openEditor(record.id);
+    actionsTd.appendChild(editBtn);
+
+    if (!String(record.id).startsWith("base-")) {
+      const delBtn = document.createElement("button");
+      delBtn.className = "red";
+      delBtn.textContent = "Delete";
+      delBtn.onclick = () => deleteQuestion(record.id);
+      actionsTd.appendChild(delBtn);
+    }
+
+    tr.appendChild(actionsTd);
+    els.resultsBody.appendChild(tr);
+  });
+  els.count.textContent = filtered.length + " question(s) shown";
+}
+
+function openEditor(id=null) {
+  editingId = id;
+  const record = id ? data.find(r => r.id === id) : null;
+  els.editorTitle.textContent = id ? "Edit Question" : "Add Question";
+  document.getElementById("editYearFilter").value = record?.YearFilter || "";
+  document.getElementById("editYear").value = record?.Year || "";
+  document.getElementById("editJCFilter").value = record?.JCFilter || "";
+  document.getElementById("editJC").value = record?.JC || "";
+  document.getElementById("editLevel").value = record?.Level || "H2";
+  document.getElementById("editGroup").value = record?.Group || "";
+  document.getElementById("editKeywords").value = record?.Keywords || "";
+  document.getElementById("editExtracts").value = record?.Extracts || "";
+  document.getElementById("editQuestion").value = record?.Question || "";
+  els.aiStatus.textContent = "";
+  els.backdrop.style.display = "flex";
+}
+
+function closeEditor() {
+  els.backdrop.style.display = "none";
+  editingId = null;
+}
+
+function collectForm() {
+  const id = editingId && !String(editingId).startsWith("base-") ? editingId : "q-" + Date.now();
+  return {
+    id,
+    YearFilter: document.getElementById("editYearFilter").value.trim(),
+    Year: document.getElementById("editYear").value.trim(),
+    JCFilter: document.getElementById("editJCFilter").value.trim(),
+    JC: document.getElementById("editJC").value.trim(),
+    Level: document.getElementById("editLevel").value.trim(),
+    Group: document.getElementById("editGroup").value.trim(),
+    Keywords: document.getElementById("editKeywords").value.trim(),
+    Extracts: document.getElementById("editExtracts").value.trim(),
+    Question: document.getElementById("editQuestion").value.trim(),
+    Source: "Firebase"
+  };
+}
+
+async function saveQuestion() {
+  if (!firebaseReady) return alert("Firebase is not connected. Paste your Firebase config first.");
+  const record = collectForm();
+  if (!record.Question) return alert("Please enter a question.");
+
+  try {
+    await setDoc(doc(db, COLLECTION_NAME, record.id), { ...record, updatedAt: serverTimestamp() });
+    await loadFirebaseQuestions();
+    closeEditor();
+    setStatus("Saved to Firebase.", "ok");
+  } catch (err) {
+    console.error(err);
+    alert("Could not save to Firebase. Check Firestore rules.");
+  }
+}
+
+async function deleteQuestion(id) {
+  if (!firebaseReady) return alert("Firebase is not connected.");
+  if (!confirm("Delete this Firebase question?")) return;
+  try {
+    await deleteDoc(doc(db, COLLECTION_NAME, id));
+    await loadFirebaseQuestions();
+    setStatus("Deleted from Firebase.", "ok");
+  } catch (err) {
+    console.error(err);
+    alert("Could not delete from Firebase.");
+  }
+}
+
+async function callOpenRouter(messages, temperature=0.2) {
+  const res = await fetch("/api/openrouter", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({ model:OPENROUTER_MODEL, messages, temperature })
+  });
+  if (!res.ok) {
+    let detail = "";
+    try { detail = (await res.json()).error || ""; } catch (_) {}
+    throw new Error("AI API error " + res.status + (detail ? ": " + detail : ""));
+  }
+  const json = await res.json();
+  return json.choices?.[0]?.message?.content?.trim() || "";
+}
+
+async function generateAIKeywords() {
+  const question = document.getElementById("editQuestion").value.trim();
+  const extracts = document.getElementById("editExtracts").value.trim();
+  if (!question && !extracts) return alert("Enter the question or extract first.");
+  els.aiStatus.textContent = "Generating keywords...";
+  try {
+    const text = await callOpenRouter([
+      {role:"system",content:"You are an A-Level Economics teacher. Generate 5 to 8 concise economics keywords for exam question search. Return only comma-separated keywords. No explanation."},
+      {role:"user",content:"Question:\n"+question+"\n\nExtracts:\n"+extracts}
+    ]);
+    document.getElementById("editKeywords").value = text.replace(/^Keywords:\s*/i,"");
+    els.aiStatus.textContent = "Done.";
+  } catch (err) {
+    console.error(err);
+    els.aiStatus.textContent = "Failed. Check Vercel OPENROUTER_API_KEY environment variable and model.";
+  }
+}
+
+async function identifyExtractsAndQuestions() {
+  const fullText = document.getElementById("editQuestion").value.trim();
+  const existingExtracts = document.getElementById("editExtracts").value.trim();
+  if (!fullText && !existingExtracts) return alert("Paste the full case study text into Question first, or enter extracts.");
+
+  els.aiStatus.textContent = "Identifying extracts and questions...";
+  try {
+    const output = await callOpenRouter([
+      {
+        role:"system",
+        content:`You are an A-Level Economics teacher. Separate case study material into extracts and questions.
+Return valid JSON only with this structure:
+{
+  "extracts": "Extract 1...\n\nExtract 2...",
+  "questions": "(a)...\n(b)...",
+  "keywords": "keyword1, keyword2, keyword3"
+}
+If there are no extracts, leave extracts as an empty string. Do not invent content.`
+      },
+      {role:"user",content:"Text to separate:\n"+fullText+"\n\nExisting extracts if any:\n"+existingExtracts}
+    ]);
+    const cleaned = output.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/i, "").trim();
+    const parsed = JSON.parse(cleaned);
+    document.getElementById("editExtracts").value = parsed.extracts || "";
+    document.getElementById("editQuestion").value = parsed.questions || fullText;
+    if (parsed.keywords) document.getElementById("editKeywords").value = parsed.keywords;
+    els.aiStatus.textContent = "Done.";
+  } catch (err) {
+    console.error(err);
+    els.aiStatus.textContent = "Failed. AI output could not be parsed or API failed.";
+  }
+}
+
+function exportData() {
+  const payload = { exportedAt:new Date().toISOString(), firebaseQuestions };
+  const blob = new Blob([JSON.stringify(payload,null,2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "econs-question-bank-firebase-data.json";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById("searchButton").onclick = () => { activeKeyword = els.keywordInput.value.trim(); renderTable(); };
+els.keywordInput.addEventListener("keydown", e => { if (e.key === "Enter") { activeKeyword = e.target.value.trim(); renderTable(); } });
+document.getElementById("resetButton").onclick = () => {
+  Object.keys(selected).forEach(k => selected[k].clear());
+  document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+  els.keywordInput.value = ""; activeKeyword = ""; renderTable();
+};
+document.getElementById("addButton").onclick = () => openEditor();
+document.getElementById("syncButton").onclick = loadFirebaseQuestions;
+document.getElementById("exportButton").onclick = exportData;
+document.getElementById("cancelEditButton").onclick = closeEditor;
+document.getElementById("saveQuestionButton").onclick = saveQuestion;
+document.getElementById("aiKeywordsButton").onclick = generateAIKeywords;
+document.getElementById("aiExtractButton").onclick = identifyExtractsAndQuestions;
+
+initFirebase();
+</script>
+</body>
+</html>
