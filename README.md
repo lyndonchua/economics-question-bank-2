@@ -1,66 +1,35 @@
-# Economics Question Bank - Firebase Shell
+# Economics Question Bank
 
-This version keeps the app small. It loads questions from Firebase and can import new JSON files directly into Firestore.
+Upload to GitHub and deploy with Vercel.
 
-## Files to upload to GitHub
+## Files
+- `index.html` — main app shell with Firebase loading, editing, and JSON import
+- `api/openrouter.js` — Vercel API proxy for OpenRouter
+- `package.json` — Vercel helper file
+- `sample-questions-template.json` — sample JSON format
 
-- index.html
-- api/openrouter.js
-- package.json
-- sample-questions-template.json optional, for reference only
+## JSON schema
+Use only these fields:
 
-## Firebase collection
-
-The app reads and writes to Firestore collection:
-
-questions
-
-## Importing new questions
-
-1. Open the deployed app.
-2. Use the "Import New Questions from JSON" section.
-3. Choose a JSON file.
-4. Click "Preview JSON".
-5. If the preview looks correct, click "Import to Firebase".
-6. Click "Reload Firebase".
-
-## Accepted JSON formats
-
-The file can be:
-
-1. A direct array:
-
-[
-  { "Year": "2026", "JC": "SAJC", "Level": "H2", "Group": "EQ1", "Question": "..." }
-]
-
-2. An object with one of these arrays:
-
+```json
 {
-  "questions": [ ... ]
+  "Year": "2025",
+  "JC": "SAJC",
+  "Level": "H2",
+  "Group": "FE/CSQ1",
+  "Keywords": ["Healthcare", "Positive Externalities"],
+  "Extracts": "...",
+  "Question": "...",
+  "Answer": "",
+  "ExaminerComments": ""
 }
+```
 
-{
-  "firebaseQuestions": [ ... ]
-}
+Do not use `PaperType`, `QuestionNumber`, or `Title`. The app will ignore/remove them during import.
 
-{
-  "data": [ ... ]
-}
-
-## Supported field names
-
-Preferred fields:
-
-- id
-- YearFilter
-- Year
-- JCFilter
-- JC
-- Level
-- Group
-- Keywords
-- Extracts
-- Question
-
-The importer also accepts lowercase versions like year, jc, level, group, keywords, extracts, question.
+## Import workflow
+1. Open the app.
+2. Choose a JSON file.
+3. Click **Preview JSON**.
+4. Review and edit the full entry in the modal.
+5. Click **Import Edited Records to Firebase**.

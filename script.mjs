@@ -1,181 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Economics Question Bank - Firebase AI Extracts</title>
-<style>
-:root {
-  --blue:#1f4ea3; --light:#f4f6fb; --border:#d6dbe6; --text:#1f2937; --muted:#64748b;
-  --green:#15803d; --red:#b91c1c; --orange:#ea580c; --purple:#7c3aed;
-}
-* { box-sizing:border-box; }
-body { font-family:Arial,sans-serif; margin:0; padding:24px; background:var(--light); color:var(--text); }
-h1 { margin:0 0 16px; color:#102a5c; font-size:2.2rem; }
-.panel { background:white; border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:16px; box-shadow:0 4px 14px rgba(0,0,0,.06); }
-.filters-panel { max-height:38vh; overflow-y:auto; }
-.filter-section { margin-bottom:10px; }
-.filter-title { font-weight:bold; margin-bottom:6px; color:#334155; font-size:1.02rem; }
-.button-group { display:flex; flex-wrap:wrap; gap:6px; }
-.filter-btn { border:1px solid #c7cede; background:#f8fafc; color:#334155; padding:6px 10px; border-radius:999px; cursor:pointer; font-size:13px; }
-.filter-btn.active { background:var(--blue); color:white; border-color:var(--blue); }
-.controls { display:grid; grid-template-columns:minmax(220px,1fr) repeat(5,auto); gap:10px; margin-top:10px; align-items:center; }
-input, select, textarea, button { padding:10px; border-radius:10px; border:1px solid #c7cede; font-size:14px; font-family:Arial,sans-serif; }
-textarea { min-height:120px; resize:vertical; }
-button { cursor:pointer; font-weight:bold; }
-button.main { background:var(--blue); color:white; border:none; }
-button.secondary { background:#64748b; color:white; border:none; }
-button.green { background:var(--green); color:white; border:none; }
-button.red { background:var(--red); color:white; border:none; }
-button.orange { background:var(--orange); color:white; border:none; }
-button.purple { background:var(--purple); color:white; border:none; }
-button.light { background:#f8fafc; color:#334155; border:1px solid #c7cede; }
-#count, #firebaseStatus { font-weight:bold; margin-top:12px; }
-.status-ok { color:var(--green); }
-.status-warn { color:var(--orange); }
-.status-bad { color:var(--red); }
-.table-wrap { max-height:58vh; overflow:auto; }
-table { width:100%; border-collapse:collapse; background:white; min-width:1250px; }
-th,td { border-bottom:1px solid #e5e7eb; padding:10px; text-align:left; vertical-align:top; }
-th { background:var(--blue); color:white; position:sticky; top:0; z-index:1; }
-tr:nth-child(even) { background:#f9fafb; }
-.question { white-space:pre-wrap; line-height:1.4; min-width:360px; }
-.extracts { white-space:pre-wrap; line-height:1.4; min-width:300px; color:#334155; background:#f8fafc; border-radius:10px; padding:8px; }
-.keywords { line-height:1.6; min-width:170px; }
-.tag { display:inline-block; background:#e8f0ff; color:#1f4ea3; border:1px solid #c8dcff; padding:2px 7px; border-radius:999px; margin:2px; font-size:12px; }
-.actions { display:flex; gap:6px; flex-wrap:wrap; min-width:140px; }
-.small { color:var(--muted); font-size:13px; }
-.modal-backdrop { display:none; position:fixed; inset:0; background:rgba(15,23,42,.55); z-index:10; align-items:center; justify-content:center; padding:20px; }
-.modal { background:white; width:min(1000px,96vw); max-height:92vh; overflow:auto; border-radius:16px; padding:18px; box-shadow:0 20px 60px rgba(0,0,0,.25); }
-.modal h2 { margin-top:0; color:#102a5c; }
-.form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
-.form-grid .full { grid-column:1/-1; }
-.label { font-weight:bold; font-size:13px; display:block; margin-bottom:5px; color:#334155; }
-.form-grid input,.form-grid select,.form-grid textarea { width:100%; }
-.modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:14px; flex-wrap:wrap; }
-.notice { background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; padding:10px; border-radius:10px; margin:10px 0; }
-.import-box { display:grid; grid-template-columns:minmax(220px,1fr) auto auto; gap:10px; align-items:center; margin-top:10px; }
-.import-preview { max-height:180px; overflow:auto; background:#f8fafc; border:1px solid #e5e7eb; border-radius:10px; padding:10px; white-space:pre-wrap; font-size:13px; color:#334155; margin-top:10px; }
-.import-modal .modal { width:min(1180px,98vw); }
-.import-record-tabs { display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 14px; }
-.import-record-tab { border:1px solid #c7cede; background:#f8fafc; color:#334155; padding:7px 10px; border-radius:999px; cursor:pointer; font-weight:bold; }
-.import-record-tab.active { background:var(--purple); color:white; border-color:var(--purple); }
-.import-edit-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
-.import-edit-grid .full { grid-column:1/-1; }
-.import-edit-grid input,.import-edit-grid select,.import-edit-grid textarea { width:100%; }
-.import-edit-grid textarea { min-height:160px; }
-#importEditExtracts { min-height:280px; }
-#importEditQuestion { min-height:220px; }
-#importEditKeywords { min-height:110px; }
-.import-validation { background:#f8fafc; border:1px solid #e5e7eb; border-radius:10px; padding:10px; margin-top:10px; white-space:pre-wrap; font-size:13px; }
-@media (max-width:900px) { .import-edit-grid { grid-template-columns:1fr; } }
-@media (max-width:900px) { .controls,.form-grid { grid-template-columns:1fr; } }
-</style>
-</head>
-<body>
-<h1>Economics Question Bank</h1>
 
-<div class="panel">
-  <div class="filter-title">Firebase Status</div>
-  <div id="firebaseStatus" class="status-warn">Checking Firebase connection...</div>
-  <div class="small">Added/edited questions and extracted CSQ data will save to Firestore collection: <b>questions</b>.</div>
-</div>
-
-<div class="panel">
-  <div class="filter-title">Import New Questions from JSON</div>
-  <div class="small">Upload a JSON file, preview the processed records, then save them into Firebase collection: <b>questions</b>.</div>
-  <div class="import-box">
-    <input id="jsonImportFile" type="file" accept=".json,application/json">
-    <button class="purple" id="previewJsonButton" type="button">Preview JSON</button>
-    <button class="green" id="importJsonButton" type="button">Import to Firebase</button>
-  </div>
-  <div id="importStatus" class="small"></div>
-  <div id="importPreview" class="import-preview" style="display:none"></div>
-</div>
-
-<div class="panel filters-panel">
-  <div class="filter-section"><div class="filter-title">Question Group</div><div class="button-group" id="groupButtons"></div></div>
-  <div class="filter-section"><div class="filter-title">Year</div><div class="button-group" id="yearButtons"></div></div>
-  <div class="filter-section"><div class="filter-title">JC</div><div class="button-group" id="jcButtons"></div></div>
-  <div class="filter-section"><div class="filter-title">Level</div><div class="button-group" id="levelButtons"></div></div>
-  <div class="controls">
-    <input id="keywordInput" type="text" placeholder="Search keyword, question, extract, JC, year...">
-    <button class="main" id="searchButton" type="button">Search</button>
-    <button class="secondary" id="resetButton" type="button">Reset</button>
-    <button class="green" id="addButton" type="button">+ Add Question</button>
-    <button class="orange" id="syncButton" type="button">Reload Firebase</button>
-    <button class="light" id="exportButton" type="button">Export JSON</button>
-  </div>
-  <div id="count"></div>
-</div>
-
-<div class="panel table-wrap">
-  <table>
-    <thead><tr><th>Year</th><th>JC</th><th>Level</th><th>Group</th><th>Keywords</th><th>Extracts</th><th>Question</th><th>Actions</th></tr></thead>
-    <tbody id="resultsBody"></tbody>
-  </table>
-</div>
-
-<div class="modal-backdrop" id="editorBackdrop">
-  <div class="modal">
-    <h2 id="editorTitle">Add Question</h2>
-
-    <div class="notice">
-      OpenRouter API key is stored safely in Vercel Environment Variables. Do not paste the AI key into this HTML file.
-    </div>
-
-    <div class="form-grid">
-      <div><label class="label">Year Filter Button</label><input id="editYearFilter" placeholder="e.g. 2025 or Before 2015"></div>
-      <div><label class="label">Year Display</label><input id="editYear" placeholder="e.g. 2025 or Before 2015 (2014)"></div>
-      <div><label class="label">JC Filter Button</label><input id="editJCFilter" placeholder="e.g. CJC, All Promo, All BT"></div>
-      <div><label class="label">JC Display</label><input id="editJC" placeholder="e.g. CJC or All Promo (SAJC FE)"></div>
-      <div><label class="label">Level</label><select id="editLevel"><option value="H1">H1</option><option value="H2">H2</option></select></div>
-      <div><label class="label">Question Group</label><input id="editGroup" placeholder="e.g. CSQ1, EQ1, EQ2"></div>
-      <div class="full"><label class="label">Keywords</label><input id="editKeywords" placeholder="e.g. Inflation, ADAS, Fiscal Policy"></div>
-      <div class="full">
-        <button class="main" id="aiKeywordsButton" type="button">Generate Keywords with AI</button>
-        <button class="purple" id="aiExtractButton" type="button">AI Identify Extracts + Questions</button>
-        <span class="small" id="aiStatus"></span>
-      </div>
-      <div class="full"><label class="label">Extracts / Case Study Material</label><textarea id="editExtracts" placeholder="For case studies, paste extracts here or let AI identify them from the full text."></textarea></div>
-      <div class="full"><label class="label">Question</label><textarea id="editQuestion" placeholder="Paste or type the question here. For CSQ, you may paste the full case text and let AI split extracts/questions."></textarea></div>
-      <div class="full"><label class="label">Answer</label><textarea id="editAnswer" placeholder="Optional: paste suggested answer here."></textarea></div>
-      <div class="full"><label class="label">Examiner Comments</label><textarea id="editExaminerComments" placeholder="Optional: paste examiner comments here."></textarea></div>
-    </div>
-
-    <div class="modal-actions">
-      <button class="secondary" id="cancelEditButton" type="button">Cancel</button>
-      <button class="green" id="saveQuestionButton" type="button">Save to Firebase</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-backdrop import-modal" id="importEditorBackdrop">
-  <div class="modal">
-    <h2>Preview & Edit JSON Import</h2>
-    <div class="small">Review and edit each record before importing to Firebase. Only these fields are used: Year, JC, Level, Group, Keywords, Extracts, Question, Answer, Examiner Comments.</div>
-    <div id="importRecordTabs" class="import-record-tabs"></div>
-    <div class="import-edit-grid">
-      <div><label class="label">Year</label><input id="importEditYear" placeholder="e.g. 2025"></div>
-      <div><label class="label">JC</label><input id="importEditJC" placeholder="e.g. SAJC"></div>
-      <div><label class="label">Level</label><select id="importEditLevel"><option value="H1">H1</option><option value="H2">H2</option></select></div>
-      <div><label class="label">Group</label><input id="importEditGroup" placeholder="e.g. FE/CSQ1, CT/EQ1"></div>
-      <div class="full"><label class="label">Keywords, one per line or comma-separated</label><textarea id="importEditKeywords"></textarea></div>
-      <div class="full"><label class="label">Extracts / Case Study Material</label><textarea id="importEditExtracts"></textarea></div>
-      <div class="full"><label class="label">Question</label><textarea id="importEditQuestion"></textarea></div>
-      <div class="full"><label class="label">Answer</label><textarea id="importEditAnswer" placeholder="Optional"></textarea></div>
-      <div class="full"><label class="label">Examiner Comments</label><textarea id="importEditExaminerComments" placeholder="Optional"></textarea></div>
-    </div>
-    <div id="importValidation" class="import-validation"></div>
-    <div class="modal-actions">
-      <button class="secondary" id="closeImportEditorButton" type="button">Close</button>
-      <button class="light" id="saveImportEditButton" type="button">Save Current Edit</button>
-      <button class="green" id="importEditedJsonButton" type="button">Import Edited Records to Firebase</button>
-    </div>
-  </div>
-</div>
-
-<script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getFirestore, collection, getDocs, setDoc, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
@@ -393,8 +216,6 @@ function openEditor(id=null) {
   document.getElementById("editKeywords").value = record?.Keywords || "";
   document.getElementById("editExtracts").value = record?.Extracts || "";
   document.getElementById("editQuestion").value = record?.Question || "";
-  document.getElementById("editAnswer").value = record?.Answer || "";
-  document.getElementById("editExaminerComments").value = record?.ExaminerComments || "";
   els.aiStatus.textContent = "";
   els.backdrop.style.display = "flex";
 }
@@ -417,8 +238,6 @@ function collectForm() {
     Keywords: document.getElementById("editKeywords").value.trim(),
     Extracts: document.getElementById("editExtracts").value.trim(),
     Question: document.getElementById("editQuestion").value.trim(),
-    Answer: document.getElementById("editAnswer").value.trim(),
-    ExaminerComments: document.getElementById("editExaminerComments").value.trim(),
     Source: "Firebase"
   };
 }
@@ -802,6 +621,3 @@ document.getElementById("aiKeywordsButton").onclick = generateAIKeywords;
 document.getElementById("aiExtractButton").onclick = identifyExtractsAndQuestions;
 
 initFirebase();
-</script>
-</body>
-</html>

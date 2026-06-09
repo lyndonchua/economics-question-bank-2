@@ -1,13 +1,18 @@
 [
   {
-    "YearFilter": "2026",
-    "Year": "2026",
-    "JCFilter": "SAJC",
+    "Year": "2025",
     "JC": "SAJC",
     "Level": "H2",
-    "Group": "EQ1",
-    "Keywords": "Demand, Supply, Price Elasticity",
-    "Extracts": "",
-    "Question": "1(a) Explain how a fall in supply affects price and quantity. [10]"
+    "Group": "FE/CSQ1",
+    "Keywords": [
+      "Healthcare",
+      "Positive Externalities",
+      "Subsidies",
+      "Consumer Welfare"
+    ],
+    "Extracts": "Paste all extracts or case study material here.",
+    "Question": "Paste the full CSQ or essay question here.",
+    "Answer": "",
+    "ExaminerComments": ""
   }
 ]
