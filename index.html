@@ -121,9 +121,6 @@ tr:nth-child(even) { background:#f9fafb; }
   </div>
 </div>
 
-<script src="questions-data.js"></script>
-
-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getFirestore, collection, getDocs, setDoc, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
@@ -149,9 +146,8 @@ const COLLECTION_NAME = "questions";
 
 /* ========================= */
 
-const baseData = window.BASE_QUESTIONS_DATA || [];
 let firebaseQuestions = [];
-let data = [...baseData];
+let data = [];
 let db = null;
 let firebaseReady = false;
 
@@ -177,7 +173,7 @@ function setStatus(text, type="warn") {
 async function initFirebase() {
   try {
     if (firebaseConfig.apiKey.startsWith("PASTE_") || firebaseConfig.projectId.startsWith("PASTE_")) {
-      setStatus("Firebase config not pasted yet. App is view-only until you add your Firebase config.", "warn");
+      setStatus("Firebase config not pasted yet. Paste Firebase config to load questions from Firestore.", "warn");
       rebuildData();
       return;
     }
@@ -202,7 +198,7 @@ async function loadFirebaseQuestions() {
 }
 
 function rebuildData() {
-  data = [...baseData, ...firebaseQuestions];
+  data = [...firebaseQuestions];
   rebuildButtons();
   renderTable();
 }
