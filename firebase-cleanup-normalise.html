@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Firebase Question Bank Cleanup</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f4f6fb;color:#1f2937;margin:0;padding:24px} .panel{background:#fff;border:1px solid #d6dbe6;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 4px 14px rgba(0,0,0,.06)} h1{color:#102a5c;margin-top:0} button{background:#1f4ea3;color:#fff;border:none;border-radius:10px;padding:12px 16px;font-weight:700;cursor:pointer} button:disabled{background:#94a3b8;cursor:not-allowed}.danger{background:#b91c1c}.ok{color:#15803d;font-weight:700}.bad{color:#b91c1c;font-weight:700}.warn{color:#ea580c;font-weight:700} pre{white-space:pre-wrap;background:#0f172a;color:#e5e7eb;border-radius:12px;padding:14px;max-height:55vh;overflow:auto}.small{color:#64748b;font-size:13px} code{background:#f1f5f9;padding:2px 5px;border-radius:5px}
+</style>
+</head>
+<body>
+<div class="panel">
+<h1>Firebase Question Bank Cleanup</h1>
+<p>This page cleans existing records in Firestore collection <code>questions</code>.</p>
+<p>It changes:</p>
+<ul>
+<li><code>Before 2015 (2007)</code> → <code>2007</code>, and similarly for other years.</li>
+<li><code>All BT (SAJC BT1)</code> → <code>SAJC BT1</code>, and similarly for other BT labels.</li>
+<li><code>All Promo (ACJC Promo)</code> → <code>ACJC Promo</code>, and similarly for other Promo labels.</li>
+</ul>
+<p class="small">It updates both display fields and filter fields where present: Year, YearFilter, JC, JCFilter.</p>
+<button id="previewBtn">Preview Cleanup</button>
+<button id="runBtn" class="danger" disabled>Run Cleanup on Firebase</button>
+<div id="status" class="warn">Ready. Preview first.</div>
+</div>
+<div class="panel">
+<h2>Log</h2>
+<pre id="log"></pre>
+</div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { getFirestore, collection, getDocs, writeBatch, doc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBUgKdY5Rj3IfN2hrdXm2inCI2DkHvQ9ik",
+  authDomain: "economics-question-bank.firebaseapp.com",
+  projectId: "economics-question-bank",
+  storageBucket: "economics-question-bank.firebasestorage.app",
+  messagingSenderId: "721758535915",
+  appId: "1:721758535915:web:0c6d2c4a12a6000bca7eae"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const logEl = document.getElementById('log');
+const statusEl = document.getElementById('status');
+const previewBtn = document.getElementById('previewBtn');
+const runBtn = document.getElementById('runBtn');
+let plannedUpdates = [];
+
+function log(msg){ logEl.textContent += msg + "\n"; logEl.scrollTop = logEl.scrollHeight; }
+function setStatus(msg, cls){ statusEl.className = cls || ''; statusEl.textContent = msg; }
+
+function cleanYearValue(value, fallback){
+  if (value == null) return value;
+  const s = String(value).trim();
+  let match = s.match(/^Before\s+2015\s*\((\d{4})\)$/i);
+  if (match) return match[1];
+  match = String(fallback || '').trim().match(/^Before\s+2015\s*\((\d{4})\)$/i);
+  if (/^Before\s+2015$/i.test(s) && match) return match[1];
+  return s;
+}
+
+function cleanJCValue(value){
+  if (value == null) return value;
+  const s = String(value).trim();
+  let match = s.match(/^All\s+BT\s*\((.+?)\)$/i);
+  if (match) return match[1].trim();
+  match = s.match(/^All\s+Promo\s*\((.+?)\)$/i);
+  if (match) return match[1].trim();
+  return s;
+}
+
+function buildUpdate(data){
+  const update = {};
+  const currentYear = data.Year;
+  const currentYearFilter = data.YearFilter;
+  const newYear = cleanYearValue(currentYear, currentYearFilter);
+  const newYearFilter = cleanYearValue(currentYearFilter, currentYear);
+
+  if (newYear !== currentYear) update.Year = newYear;
+  if (newYearFilter !== currentYearFilter) update.YearFilter = newYearFilter;
+
+  const currentJC = data.JC;
+  const currentJCFilter = data.JCFilter;
+  const newJC = cleanJCValue(currentJC);
+  const newJCFilter = cleanJCValue(currentJCFilter);
+
+  if (newJC !== currentJC) update.JC = newJC;
+  if (newJCFilter !== currentJCFilter) update.JCFilter = newJCFilter;
+
+  return update;
+}
+
+async function preview(){
+  plannedUpdates = [];
+  logEl.textContent = '';
+  setStatus('Loading Firestore records...', 'warn');
+  previewBtn.disabled = true;
+  runBtn.disabled = true;
+  try{
+    const snap = await getDocs(collection(db, 'questions'));
+    log(`Scanned ${snap.size} records.`);
+    snap.forEach(d => {
+      const data = d.data();
+      const update = buildUpdate(data);
+      if (Object.keys(update).length){
+        plannedUpdates.push({ id: d.id, before: data, update });
+        log(`\n${d.id}`);
+        if ('Year' in update) log(`  Year: ${data.Year} -> ${update.Year}`);
+        if ('YearFilter' in update) log(`  YearFilter: ${data.YearFilter} -> ${update.YearFilter}`);
+        if ('JC' in update) log(`  JC: ${data.JC} -> ${update.JC}`);
+        if ('JCFilter' in update) log(`  JCFilter: ${data.JCFilter} -> ${update.JCFilter}`);
+      }
+    });
+    if (plannedUpdates.length){
+      setStatus(`Preview complete. ${plannedUpdates.length} records need cleanup.`, 'warn');
+      runBtn.disabled = false;
+    } else {
+      setStatus('No cleanup needed.', 'ok');
+    }
+  } catch(err){
+    console.error(err);
+    setStatus('Error during preview. Check console.', 'bad');
+    log(err.message || String(err));
+  } finally {
+    previewBtn.disabled = false;
+  }
+}
+
+async function runCleanup(){
+  if (!plannedUpdates.length) return;
+  if (!confirm(`Update ${plannedUpdates.length} Firestore records?`)) return;
+  previewBtn.disabled = true;
+  runBtn.disabled = true;
+  setStatus('Updating Firebase...', 'warn');
+  try{
+    let count = 0;
+    for (let i = 0; i < plannedUpdates.length; i += 450){
+      const chunk = plannedUpdates.slice(i, i + 450);
+      const batch = writeBatch(db);
+      chunk.forEach(item => {
+        batch.update(doc(db, 'questions', item.id), item.update);
+      });
+      await batch.commit();
+      count += chunk.length;
+      log(`Committed ${count}/${plannedUpdates.length} updates...`);
+    }
+    setStatus(`Cleanup complete. Updated ${count} records.`, 'ok');
+    log('\nDone. Go back to the main app and click Reload Firebase.');
+  } catch(err){
+    console.error(err);
+    setStatus('Error during cleanup. Check console.', 'bad');
+    log(err.message || String(err));
+  } finally {
+    previewBtn.disabled = false;
+  }
+}
+
+previewBtn.addEventListener('click', preview);
+runBtn.addEventListener('click', runCleanup);
+</script>
+</body>
+</html>
