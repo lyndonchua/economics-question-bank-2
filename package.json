@@ -1,9 +1,6 @@
 {
-  "name": "news-article-compiler-v4",
-  "version": "4.0.0",
+  "name": "econs-question-bank-v5",
+  "version": "5.1.0",
   "private": true,
-  "type": "module",
-  "scripts": {
-    "dev": "vercel dev"
-  }
+  "type": "module"
 }
