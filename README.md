@@ -1,4 +1,4 @@
-# News Article Compiler V4.2
+# News Article Compiler V4.3
 
 Includes:
 - Firestore storage
@@ -29,3 +29,9 @@ V4.2 changes:
 - Stores cleaned article text
 - Adds economics concepts field
 - Adds quick search by economics concepts
+
+V4.3 fix:
+- AI cleaning no longer overwrites raw extracted article text
+- App stores both fullArticleRaw and fullArticleCleaned
+- Display shows both AI-cleaned article and raw full article
+- If AI cleaning removes too much, raw article is still preserved and saved
