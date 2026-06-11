@@ -1,12 +1,31 @@
-# Economics Question Bank V5
+# News Article Compiler V4.2
 
-Latest update:
-- Reduced table font size by 1 point.
-- Full Question, Extracts, Answer and Examiner Comments now display without truncation.
-- Wider table with horizontal scrolling retained.
-- Clean schema retained: Year, JC, Level, Group, Keywords, Extracts, Question, Answer, Examiner Comments.
+Includes:
+- Firestore storage
+- Passcode 7728
+- Full article storage
+- AI summary
+- General keywords
+- Economic keywords
+- Date range search
+- Source filter
+- Compact display
+- Bulk URL saving
+- Duplicate URL detection
+- Export JSON, Excel, Word
+- Import JSON
 
-Deploy:
-1. Upload `index.html`, `api/openrouter.js`, and `package.json` to GitHub.
-2. Redeploy on Vercel.
-3. Keep `OPENROUTER_API_KEY` in Vercel Environment Variables.
+Vercel env var required:
+OPENROUTER_API_KEY
+
+V4.1 changes:
+- Removed long individual publication date button list
+- Added date range search
+- Added preset buttons: Last 7 Days, Last 30 Days, This Month, This Year
+- General keywords and economic terms now appear in fixed-height scrollable boxes
+
+V4.2 changes:
+- AI removes advertisements and non-news content before saving/summarising
+- Stores cleaned article text
+- Adds economics concepts field
+- Adds quick search by economics concepts

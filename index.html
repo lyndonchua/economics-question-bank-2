@@ -1,745 +1,259 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Economics Question Bank V5</title>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>News Article Compiler V4.2</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
 <style>
-:root{
-  --blue:#1f4ea3;--light:#f4f6fb;--border:#d6dbe6;--text:#1f2937;--muted:#64748b;
-  --green:#15803d;--red:#b91c1c;--orange:#ea580c;--purple:#7c3aed;--dark:#102a5c;
-}
-*{box-sizing:border-box}
-body{font-family:Arial,sans-serif;margin:0;padding:20px;background:var(--light);color:var(--text)}
-h1{margin:0 0 14px;color:var(--dark);font-size:2rem}
-h2{margin:0 0 10px;color:var(--dark)}
-.panel{background:white;border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px;box-shadow:0 4px 14px rgba(0,0,0,.06)}
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.full{grid-column:1/-1}
-label{font-weight:bold;font-size:13px;color:#334155;display:block;margin-bottom:5px}
-input,select,textarea,button{padding:10px;border-radius:10px;border:1px solid #c7cede;font-size:14px;font-family:Arial,sans-serif}
-input,select,textarea{width:100%}
-textarea{min-height:130px;resize:vertical}
-button{cursor:pointer;font-weight:bold}
-.main{background:var(--blue);color:white;border:none}
-.green{background:var(--green);color:white;border:none}
-.red{background:var(--red);color:white;border:none}
-.orange{background:var(--orange);color:white;border:none}
-.purple{background:var(--purple);color:white;border:none}
-.secondary{background:#64748b;color:white;border:none}
-.light{background:#f8fafc;color:#334155;border:1px solid #c7cede}
-.small{color:var(--muted);font-size:13px}
-.status-ok{color:var(--green);font-weight:bold}
-.status-warn{color:var(--orange);font-weight:bold}
-.status-bad{color:var(--red);font-weight:bold}
-.notice{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;padding:10px;border-radius:10px;margin:10px 0}
-.filter-section{margin-bottom:10px}
-.filter-title{font-weight:bold;margin-bottom:6px;color:#334155;font-size:1rem}
-.button-group{display:flex;flex-wrap:wrap;gap:6px}
-.filter-btn{border:1px solid #c7cede;background:#f8fafc;color:#334155;padding:6px 10px;border-radius:999px;cursor:pointer;font-size:13px}
-.filter-btn.active{background:var(--blue);color:white;border-color:var(--blue)}
-.controls{display:grid;grid-template-columns:minmax(220px,1fr) repeat(5,auto);gap:10px;margin-top:10px;align-items:center}
-.table-wrap{max-height:58vh;overflow:auto}
-table{width:100%;border-collapse:collapse;background:white;min-width:1900px;font-size:13px}
-th,td{border-bottom:1px solid #e5e7eb;padding:8px;text-align:left;vertical-align:top;font-size:13px}
-th{background:var(--blue);color:white;position:sticky;top:0;z-index:1}
-tr:nth-child(even){background:#f9fafb}
-.question,.extracts{white-space:pre-wrap;line-height:1.25;word-break:break-word;overflow:visible}
-.question{min-width:600px}
-.extracts{min-width:500px;color:#334155;background:#f8fafc;border-radius:10px;padding:8px}
-.tag{display:inline-block;background:#e8f0ff;color:#1f4ea3;border:1px solid #c8dcff;padding:2px 7px;border-radius:999px;margin:2px;font-size:12px}
-.actions{display:flex;gap:6px;flex-wrap:wrap;min-width:150px}
-.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(15,23,42,.58);z-index:20;align-items:center;justify-content:center;padding:20px}
-.modal{background:white;width:min(1120px,97vw);max-height:92vh;overflow:auto;border-radius:16px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.25)}
-.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
-.preview-card{border:1px solid var(--border);border-radius:12px;padding:12px;margin:10px 0;background:#fbfdff}
-.preview-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.preview-summary{white-space:pre-wrap;max-height:170px;overflow:auto;background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:8px;margin-top:8px}
-.progress{height:8px;background:#e5e7eb;border-radius:99px;overflow:hidden;margin:8px 0}
-.progress > div{height:100%;width:0%;background:var(--blue)}
-.badge{display:inline-block;border-radius:999px;padding:2px 8px;font-size:12px;background:#eef2ff;color:#3730a3;border:1px solid #c7d2fe}
-.warning-card{border:1px solid #fbbf24;background:#fffbeb;color:#92400e;border-radius:10px;padding:8px;margin-top:8px}
-@media(max-width:900px){.grid,.controls{grid-template-columns:1fr}.modal{width:98vw}}
+body{font-family:Arial,sans-serif;margin:0;background:#f4f6f8;color:#222}
+header{background:#111827;color:white;padding:18px}
+main{max-width:1250px;margin:auto;padding:16px}
+.card{background:white;border-radius:14px;padding:16px;margin-bottom:16px;box-shadow:0 2px 10px #0001}
+input,textarea,button,select{width:100%;box-sizing:border-box;margin:6px 0;padding:10px;border-radius:9px;border:1px solid #ccc;font-size:15px}
+textarea{min-height:145px;line-height:1.5}
+button{background:#2563eb;color:white;border:none;cursor:pointer;font-weight:bold}
+button.secondary{background:#4b5563}.danger{background:#dc2626}.green{background:#16a34a}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.status{font-size:14px;color:#374151;background:#f3f4f6;border-radius:10px;padding:10px;margin-top:8px}.error{background:#fee2e2;color:#991b1b}
+.hidden{display:none!important}.topbar{display:flex;gap:8px;flex-wrap:wrap}.topbar button{width:auto}
+.quickBtn,.keywordBtn{display:inline-block;width:auto;margin:4px;padding:7px 11px;font-size:13px;border-radius:999px;background:#e5e7eb;color:#111827}
+.scrollKeywords{max-height:180px;overflow-y:auto;border:1px solid #ddd;border-radius:10px;padding:8px;background:#fafafa}
+.presetBar{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.presetBar button{width:auto}
+.activeBtn{background:#2563eb!important;color:white!important}
+.warning{background:#fff7ed;border:1px solid #fdba74;color:#9a3412;padding:10px;border-radius:10px;font-size:14px}
+.summaryBox{background:#f9fafb;border-left:4px solid #2563eb;padding:10px;border-radius:8px;white-space:pre-wrap}
+.readable{white-space:pre-wrap;line-height:1.6;background:#f9fafb;padding:12px;border-radius:10px;border:1px solid #ddd;margin-top:8px;max-height:420px;overflow:auto}
+.lockScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#111827;padding:20px}
+.lockBox{background:white;border-radius:16px;padding:24px;max-width:380px;width:100%;box-shadow:0 10px 30px #0005}
+.compactArticle{border:1px solid #ddd;border-radius:10px;background:white;margin-bottom:8px;overflow:hidden}
+.compactHeader{display:grid;grid-template-columns:1.3fr .7fr .6fr 1fr 1fr auto;gap:8px;align-items:center;padding:10px 12px;cursor:pointer}
+.compactTitle{font-weight:bold}.compactMeta{font-size:13px;color:#666}.compactKeywords{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}
+.compactActions{display:flex;gap:6px}.compactActions button{width:auto;margin:0;padding:6px 10px;font-size:13px}
+.articleDetails{padding:0 12px 12px 12px;border-top:1px solid #eee}
+.bulkItem{font-size:13px;padding:6px 8px;border-bottom:1px solid #eee}.bulkOk{color:#166534}.bulkFail{color:#991b1b}.bulkWorking{color:#1d4ed8}
+.stats{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.statBox{background:#f9fafb;border:1px solid #ddd;border-radius:10px;padding:10px}.statNum{font-size:24px;font-weight:bold}
+@media(max-width:950px){.row,.row3{grid-template-columns:1fr}.topbar button{width:100%}.compactHeader{grid-template-columns:1fr}.compactActions{display:grid;grid-template-columns:1fr 1fr}.compactActions button{width:100%}.stats{grid-template-columns:1fr 1fr}}
 </style>
 </head>
-
 <body>
-<h1>Economics Question Bank V5</h1>
+<div id="lockScreen" class="lockScreen"><div class="lockBox"><h1>News Article Compiler V4.2</h1><p>Enter passcode to continue.</p><input id="passcodeInput" type="password" placeholder="Passcode" onkeydown="if(event.key==='Enter')checkPasscode()"><button onclick="checkPasscode()">Unlock</button><p id="passcodeError" style="color:#dc2626"></p></div></div>
+<div id="appShell" class="hidden">
+<header><h1>News Article Compiler V4.2</h1><p>Firestore article bank with AI-cleaned articles, economics concepts, compact search, bulk import and export.</p></header>
+<main>
+<div class="card"><h2>Dashboard</h2><div class="stats"><div class="statBox"><div class="statNum" id="statTotal">0</div><div>Total articles</div></div><div class="statBox"><div class="statNum" id="statSources">0</div><div>Sources</div></div><div class="statBox"><div class="statNum" id="statGeneralKeywords">0</div><div>General keywords</div></div><div class="statBox"><div class="statNum" id="statEconomicKeywords">0</div><div>Economic terms</div></div><div class="statBox"><div class="statNum" id="statConcepts">0</div><div>Economics concepts</div></div></div></div>
 
-<div class="panel">
-  <h2>Firebase Status</h2>
-  <div id="firebaseStatus" class="status-warn">Checking Firebase connection...</div>
-  <div class="small">All finalized records save to Firestore collection: <b>questions</b>.</div>
+<div class="card"><h2>Add Single Article</h2>
+<input id="articleUrl" placeholder="Paste article URL here"><button onclick="fetchArticleFromUrl()">Fetch Article from URL</button>
+<p>Or upload a PDF article:</p><input id="pdfUpload" type="file" accept="application/pdf" onchange="loadPDF(event)">
+<div class="row"><input id="title" placeholder="Article title"><input id="source" placeholder="Source e.g. CNA, BBC, Straits Times"></div>
+<div class="row"><input id="publicationDate" type="date"><input id="url" placeholder="Article URL"></div>
+<h3>Readable Full Article Section</h3><textarea id="content" placeholder="Full readable article text will appear here."></textarea>
+<button onclick="summarizeWithAI()">Generate Summary + Keywords</button>
+<h3>Summary Section</h3><textarea id="summary" placeholder="AI summary will appear here"></textarea>
+<div class="row"><input id="keywords" placeholder="General keywords, separated by commas"><input id="economicKeywords" placeholder="Economic terms, separated by commas"></div><input id="economicsConcepts" placeholder="Economics concepts, separated by commas">
+<div class="row"><button onclick="saveArticle()">Save Article to Firestore</button><button class="secondary" onclick="clearForm()">Clear Form</button></div>
+<div id="status" class="status hidden"></div></div>
+
+<div class="card"><h2>Bulk Save Multiple Articles</h2><p>Paste one article URL per line. Duplicate URLs will be skipped automatically.</p>
+<textarea id="bulkUrls" placeholder="https://example.com/article-1&#10;https://example.com/article-2"></textarea>
+<div class="row"><button onclick="bulkSaveArticles()">Start Bulk Save</button><button class="secondary" onclick="document.getElementById('bulkUrls').value=''">Clear URLs</button></div>
+<div id="bulkStatus" class="status hidden"></div><div id="bulkLog"></div></div>
+
+<div class="card"><h2>Display & Search</h2>
+<input id="searchBox" placeholder="Search title, source, summary, full article text, general keywords or economic terms" oninput="renderArticles()">
+<h3>Publication Date Range</h3>
+<div class="row3">
+  <input id="dateFrom" type="date" onchange="renderArticles()" title="From publication date">
+  <input id="dateTo" type="date" onchange="renderArticles()" title="To publication date">
+  <button class="secondary" onclick="clearDateRange()">Clear Date Range</button>
 </div>
 
-<div class="panel">
-  <h2>Upload and Process New Questions</h2>
-  <div class="notice">
-    Upload PDF, Word, Excel or JSON. PDF/Word/Excel files are converted to text, processed by AI, then shown in Review & Edit before Firebase import.
-    JSON files skip AI and go straight to Review & Edit.
-  </div>
-
-  <div class="row">
-    <input id="fileInput" type="file" multiple accept=".pdf,.docx,.doc,.xlsx,.xls,.json,.txt" />
-    <button class="purple" id="processFilesButton" type="button">Process Uploaded Files</button>
-    <button class="green" id="importReviewedButton" type="button">Import Reviewed Records</button>
-    <button class="light" id="clearStagingButton" type="button">Clear Staging</button>
-  </div>
-
-  <div class="small" id="uploadStatus">No files processed yet.</div>
-  <div class="progress"><div id="progressBar"></div></div>
-
-  <details style="margin-top:10px">
-    <summary><b>AI processor prompt used by this app</b></summary>
-    <pre id="processorPromptBox" style="white-space:pre-wrap;background:#f8fafc;border:1px solid #e5e7eb;border-radius:10px;padding:10px;max-height:320px;overflow:auto"></pre>
-  </details>
-
-  <div id="stagingArea"></div>
+<div class="presetBar">
+  <button class="secondary" onclick="setDatePreset('last7')">Last 7 Days</button>
+  <button class="secondary" onclick="setDatePreset('last30')">Last 30 Days</button>
+  <button class="secondary" onclick="setDatePreset('thisMonth')">This Month</button>
+  <button class="secondary" onclick="setDatePreset('thisYear')">This Year</button>
 </div>
 
-<div class="panel">
-  <div class="filter-section"><div class="filter-title">Question Group</div><div class="button-group" id="groupButtons"></div></div>
-  <div class="filter-section"><div class="filter-title">Year</div><div class="button-group" id="yearButtons"></div></div>
-  <div class="filter-section"><div class="filter-title">JC</div><div class="button-group" id="jcButtons"></div></div>
-  <div class="filter-section"><div class="filter-title">Level</div><div class="button-group" id="levelButtons"></div></div>
+<h3>Search by Source</h3>
+<select id="sourceFilter" onchange="renderArticles()">
+  <option value="">All Sources</option>
+</select>
 
-  <div class="controls">
-    <input id="keywordInput" type="text" placeholder="Search keyword, question, extract, answer, examiner comments, JC, year...">
-    <button class="main" id="searchButton" type="button">Search</button>
-    <button class="secondary" id="resetButton" type="button">Reset</button>
-    <button class="green" id="addButton" type="button">+ Add Question</button>
-    <button class="orange" id="syncButton" type="button">Reload Firebase</button>
-    <button class="light" id="exportButton" type="button">Export JSON</button>
-  </div>
-  <div id="count" class="small" style="margin-top:10px"></div>
-</div>
+<h3>Quick Search by General Keywords</h3>
+<div id="keywordButtons" class="scrollKeywords"></div>
 
-<div class="panel table-wrap">
-  <table>
-    <thead>
-      <tr>
-        <th>Year</th><th>JC</th><th>Level</th><th>Group</th><th>Keywords</th>
-        <th>Extracts</th><th>Question</th><th>Answer</th><th>Examiner Comments</th><th>Actions</th>
-      </tr>
-    </thead>
-    <tbody id="resultsBody"></tbody>
-  </table>
-</div>
+<h3>Quick Search by Economic Terms</h3>
+<div id="economicKeywordButtons" class="scrollKeywords"></div>
+<h3>Quick Search by Economics Concepts</h3>
+<div id="economicsConceptButtons" class="scrollKeywords"></div>
+<div class="topbar"><button class="secondary" onclick="clearFilters()">Show All Articles</button><button class="secondary" onclick="downloadDatabase()">Download JSON</button><button class="green" onclick="downloadExcel()">Download Excel</button><button class="green" onclick="downloadWord()">Download Word</button><button class="secondary" onclick="document.getElementById('importFile').click()">Import JSON</button></div>
+<input id="importFile" class="hidden" type="file" accept=".json" onchange="importDatabase(event)">
+<p class="warning">Compact display: click an article row to expand. Date range and preset buttons use publication date. Keyword areas are scrollable.</p></div>
 
-<div class="modal-backdrop" id="editorBackdrop">
-  <div class="modal">
-    <h2 id="editorTitle">Edit Question</h2>
-    <div class="notice">Clean schema: Year, JC, Level, Group, Keywords, Extracts, Question, Answer, Examiner Comments. No PaperType, QuestionNumber or Title.</div>
-    <div class="grid">
-      <div><label>Year</label><input id="editYear" placeholder="e.g. 2025"></div>
-      <div><label>JC</label><input id="editJC" placeholder="e.g. SAJC"></div>
-      <div><label>Level</label><select id="editLevel"><option value="H1">H1</option><option value="H2">H2</option></select></div>
-      <div><label>Group</label><input id="editGroup" placeholder="e.g. FE/CSQ1, CT/EQ1"></div>
-      <div class="full"><label>Keywords, separated by commas</label><input id="editKeywords" placeholder="e.g. Healthcare, Positive Externalities, Subsidies"></div>
-      <div class="full row">
-        <button class="main" id="aiKeywordsButton" type="button">Generate Keywords with AI</button>
-        <button class="purple" id="aiExtractButton" type="button">AI Identify Extracts + Questions</button>
-        <span class="small" id="aiStatus"></span>
-      </div>
-      <div class="full"><label>Extracts / Case Study Material</label><textarea id="editExtracts"></textarea></div>
-      <div class="full"><label>Question</label><textarea id="editQuestion"></textarea></div>
-      <div class="full"><label>Answer</label><textarea id="editAnswer"></textarea></div>
-      <div class="full"><label>Examiner Comments</label><textarea id="editExaminerComments"></textarea></div>
-    </div>
-    <div class="modal-actions">
-      <button class="secondary" id="cancelEditButton" type="button">Cancel</button>
-      <button class="green" id="saveQuestionButton" type="button">Save to Firebase</button>
-    </div>
-  </div>
-</div>
+<div class="card"><h2>Saved Articles <span id="articleCount"></span></h2><div id="articleList"></div></div>
+</main></div>
 
-<div class="modal-backdrop" id="reviewBackdrop">
-  <div class="modal">
-    <h2 id="reviewTitle">Review & Edit Before Import</h2>
-    <div class="small" id="reviewSubtext"></div>
-    <div class="grid" style="margin-top:12px">
-      <div><label>Year</label><input id="reviewYear"></div>
-      <div><label>JC</label><input id="reviewJC"></div>
-      <div><label>Level</label><select id="reviewLevel"><option value="H1">H1</option><option value="H2">H2</option></select></div>
-      <div><label>Group</label><input id="reviewGroup"></div>
-      <div class="full"><label>Keywords, separated by commas</label><input id="reviewKeywords"></div>
-      <div class="full"><label>Extracts</label><textarea id="reviewExtracts" style="min-height:210px"></textarea></div>
-      <div class="full"><label>Question</label><textarea id="reviewQuestion" style="min-height:180px"></textarea></div>
-      <div class="full"><label>Answer</label><textarea id="reviewAnswer"></textarea></div>
-      <div class="full"><label>Examiner Comments</label><textarea id="reviewExaminerComments"></textarea></div>
-    </div>
-    <div id="duplicateWarning"></div>
-    <div class="modal-actions">
-      <button class="secondary" id="cancelReviewButton" type="button">Close</button>
-      <button class="orange" id="saveReviewButton" type="button">Save Review Changes</button>
-      <button class="green" id="importOneButton" type="button">Import This Record</button>
-    </div>
-  </div>
-</div>
+<script>
+const APP_PASSCODE="7728";
+function checkPasscode(){const input=document.getElementById("passcodeInput").value.trim();if(input===APP_PASSCODE){sessionStorage.setItem("newsCompilerUnlocked","yes");document.getElementById("lockScreen").classList.add("hidden");document.getElementById("appShell").classList.remove("hidden");window.dispatchEvent(new Event("newsCompilerUnlocked"));}else{document.getElementById("passcodeError").textContent="Wrong passcode.";}}
+if(sessionStorage.getItem("newsCompilerUnlocked")==="yes"){document.getElementById("lockScreen").classList.add("hidden");document.getElementById("appShell").classList.remove("hidden");}
+</script>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-import {
-  getFirestore, collection, getDocs, addDoc, setDoc, doc, deleteDoc,
-  serverTimestamp, query, where, limit
-} from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { getFirestore, collection, addDoc, setDoc, doc, deleteDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBUgKdY5Rj3IfN2hrdXm2inCI2DkHvQ9ik",
-  authDomain: "economics-question-bank.firebaseapp.com",
-  projectId: "economics-question-bank",
-  storageBucket: "economics-question-bank.firebasestorage.app",
-  messagingSenderId: "721758535915",
-  appId: "1:721758535915:web:0c6d2c4a12a6000bca7eae"
-};
+const firebaseConfig={apiKey:"AIzaSyAotyw1bpKRESwzR2b0j19Qn1b81FrI6Bk",authDomain:"news-article-compiler.firebaseapp.com",projectId:"news-article-compiler",storageBucket:"news-article-compiler.firebasestorage.app",messagingSenderId:"1042649880387",appId:"1:1042649880387:web:d5ef710d64f19acdd601f6"};
+const app=initializeApp(firebaseConfig), db=getFirestore(app), ARTICLES_COLLECTION="newsArticles";
+let articlesCache=[],editingId=null,activeDateFilter="",activeKeywordFilter="",activeEconomicKeywordFilter="",activeConceptFilter="",expandedArticleId="";
 
-const PROCESSOR_PROMPT = `You are an A-Level Economics Question Bank Processor.
+Object.assign(window,{fetchArticleFromUrl,loadPDF,summarizeWithAI,saveArticle,clearForm,renderArticles,clearFilters,clearDateRange,downloadDatabase,downloadExcel,downloadWord,importDatabase,filterByDate,filterByKeyword,filterByEconomicKeyword,filterByConcept,editArticle,deleteArticle,toggleArticle,bulkSaveArticles});
+if(sessionStorage.getItem("newsCompilerUnlocked")==="yes")loadArticlesFromFirestore();
+window.addEventListener("newsCompilerUnlocked",loadArticlesFromFirestore);
 
-Read the uploaded document.
+function setStatus(msg,isError=false){const el=document.getElementById("status");el.textContent=msg;el.classList.remove("hidden");el.classList.toggle("error",isError)}
+function clearStatus(){const el=document.getElementById("status");el.textContent="";el.classList.add("hidden");el.classList.remove("error")}
+function setBulkStatus(msg){const el=document.getElementById("bulkStatus");el.textContent=msg;el.classList.remove("hidden")}
+function addBulkLog(msg,cls=""){const div=document.createElement("div");div.className="bulkItem "+cls;div.textContent=msg;document.getElementById("bulkLog").prepend(div)}
+function withTimeout(promise,ms,label){return Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error(label||"Request timed out.")),ms))])}
 
-Identify:
-
-1. Year of paper
-2. School (JC)
-3. Level (H1/H2)
-4. Exam Type (WA1, WA2, CT, FE, Promo, Prelim, A Level)
-5. Question Number only for forming Group
-6. All Extracts
-7. Full Question
-8. Economics keywords based on syllabus concepts
-9. Answers if provided
-10. Examiner comments if provided
-
-Output JSON only.
-
-Schema:
-
-{
-  "Year":"",
-  "JC":"",
-  "Level":"",
-  "Group":"",
-  "Keywords":[],
-  "Extracts":"",
-  "Question":"",
-  "Answer":"",
-  "ExaminerComments":"",
-  "SourceFile":""
+async function fetchReadableUrl(rawUrl){
+ const readableUrl=rawUrl.startsWith("https://")?"https://r.jina.ai/http://"+rawUrl.replace("https://",""):rawUrl.startsWith("http://")?"https://r.jina.ai/http://"+rawUrl.replace("http://",""):"https://r.jina.ai/http://"+rawUrl;
+ const res=await withTimeout(fetch(readableUrl),25000,"Article fetching took too long.");
+ const text=await res.text(), guessedTitle=text.match(/^Title:\s*(.+)$/m), guessedDate=guessPublicationDate(text), host=new URL(rawUrl).hostname.replace("www.","");
+ return{title:guessedTitle?guessedTitle[1].trim():"",source:host,publicationDate:guessedDate,url:rawUrl,fullArticle:cleanArticleText(text)}
 }
 
-Rules:
-- One JSON object per complete CSQ or Essay.
-- Keep entire CSQ together.
-- Keep all extracts together.
-- Do not split CSQ subparts into separate records.
-- Group must be FE/CSQ1, CT/EQ1, Prelim/EQ6, WA1/EQ1, WA2/CSQ1, A Level/CSQ1, etc.
-- Do not include PaperType.
-- Do not include QuestionNumber.
-- Do not include Title.
-- Use official A-Level Economics terminology for keywords.
-- Generate at least 10 economics keywords where appropriate.
-- If answers are present, put them in Answer. If absent, leave Answer as empty string.
-- If examiner comments are present, put them in ExaminerComments. If absent, leave ExaminerComments as empty string.
-- Output valid JSON only.
-- Output an array of JSON objects.`;
-
-document.getElementById("processorPromptBox").textContent = PROCESSOR_PROMPT;
-
-let app, db;
-let firebaseOK = false;
-let questions = [];
-let filtered = [];
-let stagedRecords = [];
-let currentEditId = null;
-let currentReviewIndex = null;
-let activeFilters = { group:null, year:null, jc:null, level:null };
-
-const el = id => document.getElementById(id);
-
-function asArrayKeywords(value){
-  if(Array.isArray(value)) return value.map(x => String(x).trim()).filter(Boolean);
-  if(typeof value === "string") return value.split(",").map(x => x.trim()).filter(Boolean);
-  return [];
-}
-function keywordString(value){ return asArrayKeywords(value).join(", "); }
-function cleanRecord(raw, sourceFile=""){
-  const r = raw || {};
-  return {
-    Year: String(r.Year || r.year || "").trim(),
-    JC: String(r.JC || r.jc || "").trim(),
-    Level: String(r.Level || r.level || "").trim().toUpperCase(),
-    Group: String(r.Group || r.group || "").trim(),
-    Keywords: asArrayKeywords(r.Keywords || r.keywords),
-    Extracts: String(r.Extracts || r.extracts || "").trim(),
-    Question: String(r.Question || r.question || "").trim(),
-    Answer: String(r.Answer || r.answer || "").trim(),
-    ExaminerComments: String(r.ExaminerComments || r.examinerComments || r.ExaminerComment || "").trim(),
-    SourceFile: String(r.SourceFile || r.sourceFile || sourceFile || "").trim(),
-    Verified: Boolean(r.Verified || r.verified || false)
-  };
-}
-function validateRecord(r){
-  const missing = [];
-  ["Year","JC","Level","Group","Question"].forEach(k => { if(!r[k]) missing.push(k); });
-  if(!["H1","H2"].includes(r.Level)) missing.push("Level must be H1 or H2");
-  return missing;
-}
-function truncate(s,n=220){ s = String(s||""); return s.length > n ? s.slice(0,n)+"..." : s; }
-function escapeHtml(s){
-  return String(s||"").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function fetchArticleFromUrl(){
+ const rawUrl=document.getElementById("articleUrl").value.trim(); if(!rawUrl){alert("Paste an article URL first.");return}
+ try{setStatus("Fetching readable article text..."); const article=await fetchReadableUrl(rawUrl);
+ document.getElementById("url").value=article.url;document.getElementById("content").value=article.fullArticle;document.getElementById("title").value=article.title;document.getElementById("source").value=article.source;if(article.publicationDate)document.getElementById("publicationDate").value=article.publicationDate;clearStatus();await summarizeWithAI();}
+ catch(err){console.error(err);setStatus("Could not fetch article. Try PDF upload or paste text. "+err.message,true)}
 }
 
-async function initFirebase(){
-  try{
-    app = initializeApp(firebaseConfig);
-    db = getFirestore(app);
-    firebaseOK = true;
-    el("firebaseStatus").textContent = "Connected to Firebase. Added/edited/imported questions will sync to Firestore.";
-    el("firebaseStatus").className = "status-ok";
-    await loadFirebase();
-  }catch(err){
-    firebaseOK = false;
-    el("firebaseStatus").textContent = "Firebase connection failed: " + err.message;
-    el("firebaseStatus").className = "status-bad";
-  }
+function cleanArticleText(text){return text.replace(/^Title:.*$/m,"").replace(/^URL Source:.*$/m,"").replace(/^Markdown Content:.*$/m,"").replace(/\[(.*?)\]\((.*?)\)/g,"$1").replace(/\n{3,}/g,"\n\n").trim()}
+function guessPublicationDate(text){
+ const iso=text.match(/\b(20\d{2})[-/](0?[1-9]|1[0-2])[-/](0?[1-9]|[12]\d|3[01])\b/); if(iso)return `${iso[1]}-${String(iso[2]).padStart(2,"0")}-${String(iso[3]).padStart(2,"0")}`;
+ const months={jan:"01",january:"01",feb:"02",february:"02",mar:"03",march:"03",apr:"04",april:"04",may:"05",jun:"06",june:"06",jul:"07",july:"07",aug:"08",august:"08",sep:"09",sept:"09",september:"09",oct:"10",october:"10",nov:"11",november:"11",dec:"12",december:"12"};
+ const m=text.match(/\b(?:Published\s*)?(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)?[,]?\s*(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t)?(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+(\d{1,2}),?\s+(20\d{2})\b/i);
+ if(m)return `${m[3]}-${months[m[1].toLowerCase().replace(".","")]}-${String(m[2]).padStart(2,"0")}`;
+ const sg=text.match(/\b(\d{1,2})\s+(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t)?(?:ember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\.?\s+(20\d{2})\b/i);
+ if(sg)return `${sg[3]}-${months[sg[2].toLowerCase().replace(".","")]}-${String(sg[1]).padStart(2,"0")}`; return "";
 }
 
-async function loadFirebase(){
-  if(!firebaseOK) return;
-  const snap = await getDocs(collection(db, "questions"));
-  questions = snap.docs.map(d => ({ id:d.id, ...cleanRecord(d.data()) }));
-  filtered = [...questions];
-  buildFilters();
-  renderResults();
+async function loadPDF(event){
+ const file=event.target.files[0]; if(!file)return;
+ try{setStatus("Reading PDF..."); const buffer=await file.arrayBuffer(), pdf=await pdfjsLib.getDocument(new Uint8Array(buffer)).promise; let fullText="";
+ for(let i=1;i<=pdf.numPages;i++){const page=await pdf.getPage(i), content=await page.getTextContent();fullText+=content.items.map(item=>item.str).join(" ")+"\n\n"}
+ document.getElementById("content").value=fullText.trim();document.getElementById("title").value=file.name.replace(/\.pdf$/i,"");document.getElementById("source").value="PDF Upload";document.getElementById("url").value="";clearStatus();await summarizeWithAI();}
+ catch(err){console.error(err);setStatus("PDF reading failed. Try another PDF or paste text.",true)}
 }
 
-function buildFilters(){
-  makeButtons("groupButtons", unique(["CSQ1","CSQ2","EQ1","EQ2","EQ3","EQ4","EQ5","EQ6","Others", ...questions.map(q=>q.Group)]), "group");
-  makeButtons("yearButtons", unique(["Before 2015","2015","2016","2017","2018","2019","2020","2021","2022","2023","2024","2025", ...questions.map(q=>q.Year)]), "year");
-  makeButtons("jcButtons", unique(["All BT","All Promo","ACJC","AJC","ASRJC","CJC","DHS","EJC","GCE","HCI","IJC","JJC","JPJC","MI","MJC","NJC","NYJC","PJC","RI","RVHS","SAJC","Spec","SRJC","TJC","TMJC","TPJC","VJC","YIJC","YJC", ...questions.map(q=>q.JC)]), "jc");
-  makeButtons("levelButtons", unique(["H1","H2", ...questions.map(q=>q.Level)]), "level");
-}
-function unique(arr){
-  return [...new Set(arr.filter(Boolean).map(String))].sort((a,b) => {
-    const na = parseInt(a), nb = parseInt(b);
-    if(!isNaN(na) && !isNaN(nb)) return na-nb;
-    return a.localeCompare(b);
-  });
-}
-function makeButtons(containerId, vals, type){
-  const box = el(containerId);
-  box.innerHTML = "";
-  vals.forEach(v => {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.className = "filter-btn" + (activeFilters[type]===v ? " active" : "");
-    b.textContent = v;
-    b.onclick = () => {
-      activeFilters[type] = activeFilters[type] === v ? null : v;
-      applyFilters();
-    };
-    box.appendChild(b);
-  });
+async function summarizeCore(article){
+ const res=await withTimeout(fetch("/api/summarize",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({url:article.url||"",title:article.title||"",source:article.source||"",publicationDate:article.publicationDate||"",content:article.fullArticle||""})}),45000,"AI request took too long.");
+ const parsed=await res.json(); if(!res.ok)throw new Error(parsed.error||"AI request failed.");
+ return{...article,title:parsed.title||article.title||"",source:parsed.source||article.source||"",publicationDate:parsed.publicationDate||article.publicationDate||"",summary:parsed.summary||"",keywords:Array.isArray(parsed.keywords)?parsed.keywords:[],economicKeywords:Array.isArray(parsed.economicKeywords)?parsed.economicKeywords:[],economicsConcepts:Array.isArray(parsed.economicsConcepts)?parsed.economicsConcepts:[],fullArticleCleaned:parsed.fullArticleCleaned||article.fullArticle||""}
 }
 
-function applyFilters(){
-  const kw = el("keywordInput").value.trim().toLowerCase();
-  filtered = questions.filter(q => {
-    const groupMatch = !activeFilters.group || q.Group === activeFilters.group || (activeFilters.group==="Others" && !/CSQ|EQ/.test(q.Group));
-    const yearMatch = !activeFilters.year || q.Year === activeFilters.year || String(q.Year).includes(activeFilters.year);
-    const jcMatch = !activeFilters.jc || q.JC === activeFilters.jc;
-    const levelMatch = !activeFilters.level || q.Level === activeFilters.level;
-    const hay = [
-      q.Year,q.JC,q.Level,q.Group,keywordString(q.Keywords),q.Extracts,q.Question,q.Answer,q.ExaminerComments,q.SourceFile
-    ].join(" ").toLowerCase();
-    const kwMatch = !kw || hay.includes(kw);
-    return groupMatch && yearMatch && jcMatch && levelMatch && kwMatch;
-  });
-  buildFilters();
-  renderResults();
+async function summarizeWithAI(){
+ const content=document.getElementById("content").value.trim(); if(!content){alert("No article text found.");return}
+ try{setStatus("Generating summary and keywords..."); const article=await summarizeCore({url:document.getElementById("url").value.trim(),title:document.getElementById("title").value.trim(),source:document.getElementById("source").value.trim(),publicationDate:document.getElementById("publicationDate").value,fullArticle:content});
+ document.getElementById("title").value=article.title;document.getElementById("source").value=article.source;if(article.publicationDate)document.getElementById("publicationDate").value=article.publicationDate;document.getElementById("summary").value=article.summary;document.getElementById("keywords").value=article.keywords.join(", ");document.getElementById("economicKeywords").value=article.economicKeywords.join(", ");document.getElementById("economicsConcepts").value=(article.economicsConcepts||[]).join(", ");if(article.fullArticleCleaned){document.getElementById("content").value=article.fullArticleCleaned;}clearStatus();}
+ catch(err){console.error(err);setStatus("AI failed. "+err.message,true)}
 }
 
-function renderResults(){
-  const body = el("resultsBody");
-  body.innerHTML = "";
-  filtered.forEach(q => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${escapeHtml(q.Year)}</td>
-      <td>${escapeHtml(q.JC)}</td>
-      <td>${escapeHtml(q.Level)}</td>
-      <td>${escapeHtml(q.Group)}</td>
-      <td>${asArrayKeywords(q.Keywords).map(k=>`<span class="tag">${escapeHtml(k)}</span>`).join("")}</td>
-      <td class="extracts">${escapeHtml(q.Extracts || "")}</td>
-      <td class="question">${escapeHtml(q.Question || "")}</td>
-      <td class="question">${escapeHtml(q.Answer || "")}</td>
-      <td class="question">${escapeHtml(q.ExaminerComments || "")}</td>
-      <td><div class="actions">
-        <button class="light" data-act="edit" data-id="${q.id}">Edit</button>
-        <button class="red" data-act="delete" data-id="${q.id}">Delete</button>
-      </div></td>`;
-    body.appendChild(tr);
-  });
-  el("count").textContent = `${filtered.length} displayed / ${questions.length} total Firebase records.`;
+function duplicateByUrl(url,ignoreId=""){if(!url)return null;return articlesCache.find(a=>a.url&&a.url.trim().toLowerCase()===url.trim().toLowerCase()&&a.id!==ignoreId)}
+async function saveArticle(){
+ const publicationDate=document.getElementById("publicationDate").value, url=document.getElementById("url").value.trim();
+ if(!publicationDate){alert("Please enter the article publication date before saving.");return}
+ const duplicate=duplicateByUrl(url,editingId||""); if(duplicate){alert("Duplicate detected. This URL is already saved: "+duplicate.title);return}
+ const article={title:document.getElementById("title").value.trim(),source:document.getElementById("source").value.trim(),publicationDate,displayDate:publicationDate,url,fullArticleRaw:document.getElementById("content").value.trim(),fullArticleCleaned:document.getElementById("content").value.trim(),fullArticle:document.getElementById("content").value.trim(),summary:document.getElementById("summary").value.trim(),keywords:splitTags("keywords"),economicKeywords:splitTags("economicKeywords"),economicsConcepts:splitTags("economicsConcepts"),updatedAt:new Date().toISOString()};
+ if(!article.title||!article.fullArticle){alert("Title and full article text are required.");return}
+ try{setStatus("Saving article to Firestore..."); if(editingId){await withTimeout(setDoc(doc(db,ARTICLES_COLLECTION,editingId),article,{merge:true}),15000,"Firestore save timed out.")}else{article.createdAt=new Date().toISOString();await withTimeout(addDoc(collection(db,ARTICLES_COLLECTION),article),15000,"Firestore save timed out.")} editingId=null;clearForm();await loadArticlesFromFirestore();setStatus("Article saved to Firestore.");setTimeout(clearStatus,1800)}
+ catch(err){console.error(err);setStatus("Save failed: "+err.message,true)}
+}
+function splitTags(id){return document.getElementById(id).value.split(",").map(k=>k.trim()).filter(Boolean)}
+
+async function bulkSaveArticles(){
+ const urls=document.getElementById("bulkUrls").value.split(/\n+/).map(u=>u.trim()).filter(Boolean); if(!urls.length){alert("Paste at least one URL.");return}
+ if(!confirm(`Save ${urls.length} articles to Firestore? Duplicate URLs will be skipped.`))return;
+ document.getElementById("bulkLog").innerHTML=""; let success=0,failed=0,skipped=0;
+ for(let i=0;i<urls.length;i++){const url=urls[i];setBulkStatus(`Processing ${i+1} of ${urls.length}...`);
+  if(duplicateByUrl(url)){skipped++;addBulkLog(`Skipped duplicate: ${url}`,"bulkFail");continue}
+  addBulkLog(`Working: ${url}`,"bulkWorking");
+  try{let article=await fetchReadableUrl(url); article=await summarizeCore(article); if(!article.publicationDate)throw new Error("No publication date found. Add manually.");
+   if(duplicateByUrl(article.url)){skipped++;addBulkLog(`Skipped duplicate after extraction: ${article.url}`,"bulkFail");continue}
+   await withTimeout(addDoc(collection(db,ARTICLES_COLLECTION),{title:article.title,source:article.source,publicationDate:article.publicationDate,displayDate:article.publicationDate,url:article.url,fullArticle:article.fullArticle,summary:article.summary,keywords:article.keywords,economicKeywords:article.economicKeywords,economicsConcepts:article.economicsConcepts||[],fullArticleRaw:article.fullArticle,fullArticleCleaned:article.fullArticleCleaned||article.fullArticle,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()}),15000,"Firestore save timed out.");
+   success++;addBulkLog(`Saved: ${article.title}`,"bulkOk");
+  }catch(err){failed++;addBulkLog(`Failed: ${url} — ${err.message}`,"bulkFail")}
+  await new Promise(r=>setTimeout(r,700));
+ }
+ setBulkStatus(`Bulk save completed. Saved: ${success}. Skipped duplicates: ${skipped}. Failed: ${failed}.`); await loadArticlesFromFirestore();
 }
 
-document.addEventListener("click", async e => {
-  const btn = e.target.closest("button[data-act]");
-  if(!btn) return;
-  const id = btn.dataset.id;
-  if(btn.dataset.act === "edit") openEditor(id);
-  if(btn.dataset.act === "delete") {
-    if(confirm("Delete this question from Firebase?")){
-      await deleteDoc(doc(db, "questions", id));
-      await loadFirebase();
-    }
-  }
-});
-
-function openEditor(id=null){
-  currentEditId = id;
-  const q = id ? questions.find(x=>x.id===id) : cleanRecord({});
-  el("editorTitle").textContent = id ? "Edit Question" : "Add Question";
-  el("editYear").value = q.Year || "";
-  el("editJC").value = q.JC || "";
-  el("editLevel").value = q.Level || "H2";
-  el("editGroup").value = q.Group || "";
-  el("editKeywords").value = keywordString(q.Keywords);
-  el("editExtracts").value = q.Extracts || "";
-  el("editQuestion").value = q.Question || "";
-  el("editAnswer").value = q.Answer || "";
-  el("editExaminerComments").value = q.ExaminerComments || "";
-  el("editorBackdrop").style.display = "flex";
-}
-function closeEditor(){ el("editorBackdrop").style.display = "none"; currentEditId = null; }
-
-function getEditorRecord(){
-  return cleanRecord({
-    Year: el("editYear").value,
-    JC: el("editJC").value,
-    Level: el("editLevel").value,
-    Group: el("editGroup").value,
-    Keywords: el("editKeywords").value,
-    Extracts: el("editExtracts").value,
-    Question: el("editQuestion").value,
-    Answer: el("editAnswer").value,
-    ExaminerComments: el("editExaminerComments").value
-  });
-}
-async function saveEditor(){
-  const r = getEditorRecord();
-  const missing = validateRecord(r);
-  if(missing.length && !confirm("Missing/invalid fields: " + missing.join(", ") + ". Save anyway?")) return;
-  if(currentEditId){
-    await setDoc(doc(db, "questions", currentEditId), {...r, updatedAt: serverTimestamp()}, {merge:true});
-  }else{
-    await addDoc(collection(db, "questions"), {...r, createdAt: serverTimestamp(), updatedAt: serverTimestamp()});
-  }
-  closeEditor();
-  await loadFirebase();
+async function loadArticlesFromFirestore(){
+ try{setStatus("Loading articles from Firestore..."); let snapshot;
+  try{snapshot=await withTimeout(getDocs(query(collection(db,ARTICLES_COLLECTION),orderBy("publicationDate","desc"))),15000,"Firestore loading timed out.")}
+  catch(e){snapshot=await withTimeout(getDocs(collection(db,ARTICLES_COLLECTION)),15000,"Firestore loading timed out.")}
+  articlesCache=snapshot.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.publicationDate||"").localeCompare(a.publicationDate||"")); clearStatus();renderArticles();
+ }catch(err){console.error(err);setStatus("Could not load Firestore articles: "+err.message,true)}
 }
 
-async function callOpenRouter(messages, temperature=0.1){
-  const res = await fetch("/api/openrouter", {
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({messages, temperature})
-  });
-  const text = await res.text();
-  if(!res.ok) throw new Error(text || `OpenRouter error ${res.status}`);
-  const data = JSON.parse(text);
-  return data.content || data.choices?.[0]?.message?.content || "";
+function clearForm(){["articleUrl","title","source","publicationDate","url","content","summary","keywords","economicKeywords","economicsConcepts"].forEach(id=>document.getElementById(id).value="");editingId=null;clearStatus()}
+function getFilteredArticles(){
+ const q=document.getElementById("searchBox").value.toLowerCase(), dateFrom=document.getElementById("dateFrom").value, dateTo=document.getElementById("dateTo").value, sourceFilter=document.getElementById("sourceFilter").value;
+ return articlesCache.filter(a=>{const haystack=[a.title,a.source,a.publicationDate,a.url,a.fullArticle,a.summary,(a.keywords||[]).join(" "),(a.economicKeywords||[]).join(" "),(a.economicsConcepts||[]).join(" ")].join(" ").toLowerCase(); const d=a.publicationDate||"";
+ return haystack.includes(q)&&(!dateFrom||(d&&d>=dateFrom))&&(!dateTo||(d&&d<=dateTo))&&(!sourceFilter||a.source===sourceFilter)&&(!activeDateFilter||a.publicationDate===activeDateFilter)&&(!activeKeywordFilter||(a.keywords||[]).map(k=>k.toLowerCase()).includes(activeKeywordFilter.toLowerCase()))&&(!activeEconomicKeywordFilter||(a.economicKeywords||[]).map(k=>k.toLowerCase()).includes(activeEconomicKeywordFilter.toLowerCase()))&&(!activeConceptFilter||(a.economicsConcepts||[]).map(k=>k.toLowerCase()).includes(activeConceptFilter.toLowerCase()))})
 }
 
-async function generateKeywordsForEditor(){
-  try{
-    el("aiStatus").textContent = "Generating keywords...";
-    const r = getEditorRecord();
-    const content = `Question:\n${r.Question}\n\nExtracts:\n${r.Extracts}\n\nExisting keywords:\n${keywordString(r.Keywords)}`;
-    const out = await callOpenRouter([
-      {role:"system", content:"Generate 10-20 official A-Level Economics keywords. Output JSON array only."},
-      {role:"user", content}
-    ]);
-    const arr = parseJsonFromAI(out);
-    el("editKeywords").value = Array.isArray(arr) ? arr.join(", ") : String(out).replace(/[\[\]"]/g,"");
-    el("aiStatus").textContent = "Keywords generated.";
-  }catch(err){ el("aiStatus").textContent = "AI failed: " + err.message; }
+function renderArticles(){
+ renderQuickButtons(articlesCache);renderSourceFilter(articlesCache);renderStats(); const filtered=getFilteredArticles(); document.getElementById("articleCount").textContent=`(${filtered.length} shown / ${articlesCache.length} total)`;
+ document.getElementById("articleList").innerHTML=filtered.length?filtered.map(a=>`<div class="compactArticle"><div class="compactHeader" onclick="toggleArticle('${a.id}')"><div><div class="compactTitle">${escapeHtml(a.title)}</div><div class="compactMeta">${escapeHtml(a.source||"Unknown source")}</div></div><div class="compactMeta">${escapeHtml(a.publicationDate||"No date")}</div><div class="compactMeta">${(a.fullArticle||"").length.toLocaleString()} chars</div><div class="compactKeywords">${escapeHtml((a.keywords||[]).join(", "))}</div><div class="compactKeywords">${escapeHtml((a.economicKeywords||[]).join(", "))}</div><div class="compactActions" onclick="event.stopPropagation()"><button onclick="editArticle('${a.id}')">Edit</button><button class="danger" onclick="deleteArticle('${a.id}')">Delete</button></div></div><div class="articleDetails ${expandedArticleId===a.id?"":"hidden"}">${a.url?`<p><a href="${escapeHtml(a.url)}" target="_blank">Open original article</a></p>`:""}<h4>Summary</h4><div class="summaryBox">${escapeHtml(a.summary||"No summary yet.").replace(/\n/g,"<br>")}</div><h4>General Keywords</h4><div>${(a.keywords||[]).map(k=>`<button class="keywordBtn" onclick="filterByKeyword('${escapeAttribute(k)}')">${escapeHtml(k)}</button>`).join("")}</div><h4>Economic Terms</h4><div>${(a.economicKeywords||[]).map(k=>`<button class="keywordBtn" onclick="filterByEconomicKeyword('${escapeAttribute(k)}')">${escapeHtml(k)}</button>`).join("")}</div><h4>Economics Concepts</h4><div>${(a.economicsConcepts||[]).map(k=>`<button class="keywordBtn" onclick="filterByConcept('${escapeAttribute(k)}')">${escapeHtml(k)}</button>`).join("")}</div><details><summary>Cleaned Full Article</summary><div class="readable">${escapeHtml(a.fullArticle||"")}</div></details></div></div>`).join(""):"<p>No articles found.</p>";
 }
 
-async function identifyExtractsQuestionsForEditor(){
-  try{
-    el("aiStatus").textContent = "Processing text...";
-    const full = `${el("editExtracts").value}\n\n${el("editQuestion").value}`;
-    const out = await callOpenRouter([
-      {role:"system", content: PROCESSOR_PROMPT},
-      {role:"user", content: full}
-    ]);
-    const parsed = parseJsonFromAI(out);
-    const first = Array.isArray(parsed) ? parsed[0] : parsed;
-    if(first){
-      const r = cleanRecord(first);
-      el("editYear").value = r.Year || el("editYear").value;
-      el("editJC").value = r.JC || el("editJC").value;
-      el("editLevel").value = r.Level || el("editLevel").value;
-      el("editGroup").value = r.Group || el("editGroup").value;
-      el("editKeywords").value = keywordString(r.Keywords) || el("editKeywords").value;
-      el("editExtracts").value = r.Extracts || el("editExtracts").value;
-      el("editQuestion").value = r.Question || el("editQuestion").value;
-      el("editAnswer").value = r.Answer || el("editAnswer").value;
-      el("editExaminerComments").value = r.ExaminerComments || el("editExaminerComments").value;
-    }
-    el("aiStatus").textContent = "AI processing complete.";
-  }catch(err){ el("aiStatus").textContent = "AI failed: " + err.message; }
+function renderStats(){document.getElementById("statTotal").textContent=articlesCache.length;document.getElementById("statSources").textContent=new Set(articlesCache.map(a=>a.source).filter(Boolean)).size;document.getElementById("statGeneralKeywords").textContent=new Set(articlesCache.flatMap(a=>a.keywords||[]).filter(Boolean)).size;document.getElementById("statEconomicKeywords").textContent=new Set(articlesCache.flatMap(a=>a.economicKeywords||[]).filter(Boolean)).size;document.getElementById("statConcepts").textContent=new Set(articlesCache.flatMap(a=>a.economicsConcepts||[]).filter(Boolean)).size}
+function renderSourceFilter(articles){const select=document.getElementById("sourceFilter"), current=select.value, sources=[...new Set(articles.map(a=>a.source).filter(Boolean))].sort((a,b)=>a.localeCompare(b));select.innerHTML=`<option value="">All Sources</option>`+sources.map(s=>`<option value="${escapeAttribute(s)}">${escapeHtml(s)}</option>`).join("");select.value=current}
+function renderQuickButtons(articles){
+ const keywords=[...new Set(articles.flatMap(a=>a.keywords||[]).map(k=>k.trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b)); document.getElementById("keywordButtons").innerHTML=keywords.length?keywords.map(k=>`<button class="quickBtn ${activeKeywordFilter===k?"activeBtn":""}" onclick="filterByKeyword('${escapeAttribute(k)}')">${escapeHtml(k)}</button>`).join(""):`<span>No general keywords yet.</span>`;
+ const econ=[...new Set(articles.flatMap(a=>a.economicKeywords||[]).map(k=>k.trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b)); document.getElementById("economicKeywordButtons").innerHTML=econ.length?econ.map(k=>`<button class="quickBtn ${activeEconomicKeywordFilter===k?"activeBtn":""}" onclick="filterByEconomicKeyword('${escapeAttribute(k)}')">${escapeHtml(k)}</button>`).join(""):`<span>No economic terms yet.</span>`; const concepts=[...new Set(articles.flatMap(a=>a.economicsConcepts||[]).map(k=>k.trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b)); document.getElementById("economicsConceptButtons").innerHTML=concepts.length?concepts.map(k=>`<button class="quickBtn ${activeConceptFilter===k?"activeBtn":""}" onclick="filterByConcept('${escapeAttribute(k)}')">${escapeHtml(k)}</button>`).join(""):`<span>No economics concepts yet.</span>`;
 }
 
-function parseJsonFromAI(text){
-  let s = String(text || "").trim();
-  s = s.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/i, "").trim();
-  try { return JSON.parse(s); } catch {}
-  const startArr = s.indexOf("[");
-  const endArr = s.lastIndexOf("]");
-  if(startArr !== -1 && endArr !== -1 && endArr > startArr) return JSON.parse(s.slice(startArr, endArr+1));
-  const startObj = s.indexOf("{");
-  const endObj = s.lastIndexOf("}");
-  if(startObj !== -1 && endObj !== -1 && endObj > startObj) return JSON.parse(s.slice(startObj, endObj+1));
-  throw new Error("AI did not return valid JSON.");
+function toggleArticle(id){expandedArticleId=expandedArticleId===id?"":id;renderArticles()}
+function filterByDate(date){activeDateFilter=date;renderArticles()} function filterByKeyword(k){activeKeywordFilter=k;renderArticles()} function filterByEconomicKeyword(k){activeEconomicKeywordFilter=k;renderArticles()} function filterByConcept(k){activeConceptFilter=k;renderArticles()}
+function setDatePreset(type){
+ const today=new Date();
+ const to=today.toISOString().slice(0,10);
+ let from="";
+ if(type==="last7"){const d=new Date(today);d.setDate(d.getDate()-7);from=d.toISOString().slice(0,10)}
+ if(type==="last30"){const d=new Date(today);d.setDate(d.getDate()-30);from=d.toISOString().slice(0,10)}
+ if(type==="thisMonth"){const d=new Date(today.getFullYear(),today.getMonth(),1);from=d.toISOString().slice(0,10)}
+ if(type==="thisYear"){const d=new Date(today.getFullYear(),0,1);from=d.toISOString().slice(0,10)}
+ document.getElementById("dateFrom").value=from;
+ document.getElementById("dateTo").value=to;
+ activeDateFilter="";
+ renderArticles();
 }
+window.setDatePreset=setDatePreset;
+function clearDateRange(){document.getElementById("dateFrom").value="";document.getElementById("dateTo").value="";activeDateFilter="";renderArticles()}
+function clearFilters(){activeDateFilter="";activeKeywordFilter="";activeEconomicKeywordFilter="";activeConceptFilter="";document.getElementById("searchBox").value="";document.getElementById("dateFrom").value="";document.getElementById("dateTo").value="";document.getElementById("sourceFilter").value="";renderArticles()}
 
-async function extractFileText(file){
-  const name = file.name.toLowerCase();
-  if(name.endsWith(".json") || name.endsWith(".txt")) return await file.text();
+function editArticle(id){const a=articlesCache.find(x=>x.id===id); if(!a)return; editingId=a.id;document.getElementById("title").value=a.title||"";document.getElementById("source").value=a.source||"";document.getElementById("publicationDate").value=a.publicationDate||"";document.getElementById("url").value=a.url||"";document.getElementById("articleUrl").value=a.url||"";document.getElementById("content").value=a.fullArticle||"";document.getElementById("summary").value=a.summary||"";document.getElementById("keywords").value=(a.keywords||[]).join(", ");document.getElementById("economicKeywords").value=(a.economicKeywords||[]).join(", ");document.getElementById("economicsConcepts").value=(a.economicsConcepts||[]).join(", ");window.scrollTo({top:0,behavior:"smooth"})}
+async function deleteArticle(id){if(!confirm("Delete this article from Firestore?"))return;try{await withTimeout(deleteDoc(doc(db,ARTICLES_COLLECTION,id)),15000,"Firestore delete timed out.");await loadArticlesFromFirestore()}catch(err){alert("Delete failed: "+err.message)}}
 
-  if(name.endsWith(".docx") || name.endsWith(".doc")){
-    const arrayBuffer = await file.arrayBuffer();
-    const result = await mammoth.extractRawText({arrayBuffer});
-    return result.value || "";
-  }
+function downloadDatabase(){const backup={exportedAt:new Date().toISOString(),collection:ARTICLES_COLLECTION,totalArticles:articlesCache.length,articles:articlesCache}; const blob=new Blob([JSON.stringify(backup,null,2)],{type:"application/json"});downloadBlob(blob,`news-articles-firestore-backup-${new Date().toISOString().slice(0,10)}.json`)}
+function downloadExcel(){const rows=getFilteredArticles().map(a=>({Title:a.title||"",Source:a.source||"","Publication Date":a.publicationDate||"",URL:a.url||"",Summary:a.summary||"","General Keywords":(a.keywords||[]).join(", "),"Economic Terms":(a.economicKeywords||[]).join(", "),"Economics Concepts":(a.economicsConcepts||[]).join(", "),"Cleaned Article":a.fullArticleCleaned||a.fullArticle||"","Raw Article":a.fullArticleRaw||a.fullArticle||""})); const wb=XLSX.utils.book_new(), ws=XLSX.utils.json_to_sheet(rows);XLSX.utils.book_append_sheet(wb,ws,"News Articles");XLSX.writeFile(wb,`news-articles-${new Date().toISOString().slice(0,10)}.xlsx`)}
+async function downloadWord(){const {Document,Packer,Paragraph,TextRun,HeadingLevel}=window.docx, articles=getFilteredArticles(), children=[]; children.push(new Paragraph({text:"News Articles Export",heading:HeadingLevel.TITLE})); children.push(new Paragraph({text:`Exported: ${new Date().toLocaleString()} | Articles: ${articles.length}`})); articles.forEach((a,i)=>{children.push(new Paragraph({text:`${i+1}. ${a.title||"Untitled"}`,heading:HeadingLevel.HEADING_1}));children.push(new Paragraph({children:[new TextRun({text:`Source: ${a.source||""}`,bold:true})]}));children.push(new Paragraph({children:[new TextRun({text:`Publication Date: ${a.publicationDate||""}`,bold:true})]}));children.push(new Paragraph({text:`URL: ${a.url||""}`}));children.push(new Paragraph({text:"Summary",heading:HeadingLevel.HEADING_2}));children.push(new Paragraph({text:a.summary||""}));children.push(new Paragraph({text:"General Keywords",heading:HeadingLevel.HEADING_2}));children.push(new Paragraph({text:(a.keywords||[]).join(", ")}));children.push(new Paragraph({text:"Economic Terms",heading:HeadingLevel.HEADING_2}));children.push(new Paragraph({text:(a.economicKeywords||[]).join(", ")}));children.push(new Paragraph({text:"Full Article",heading:HeadingLevel.HEADING_2}));chunkText(a.fullArticle||"",1800).forEach(c=>children.push(new Paragraph({text:c}))) }); const doc=new Document({sections:[{properties:{},children}]}); const blob=await Packer.toBlob(doc);downloadBlob(blob,`news-articles-${new Date().toISOString().slice(0,10)}.docx`)}
+function chunkText(text,size){const chunks=[];for(let i=0;i<text.length;i+=size)chunks.push(text.slice(i,i+size));return chunks}
+function downloadBlob(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click()}
 
-  if(name.endsWith(".xlsx") || name.endsWith(".xls")){
-    const arrayBuffer = await file.arrayBuffer();
-    const wb = XLSX.read(arrayBuffer, {type:"array"});
-    let text = "";
-    wb.SheetNames.forEach(sn => {
-      text += `\n\n--- Sheet: ${sn} ---\n`;
-      text += XLSX.utils.sheet_to_csv(wb.Sheets[sn]);
-    });
-    return text;
-  }
-
-  if(name.endsWith(".pdf")){
-    pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
-    let text = "";
-    for(let p=1; p<=pdf.numPages; p++){
-      const page = await pdf.getPage(p);
-      const content = await page.getTextContent();
-      text += `\n\n--- Page ${p} ---\n` + content.items.map(i=>i.str).join(" ");
-    }
-    return text;
-  }
-
-  throw new Error("Unsupported file type: " + file.name);
-}
-
-async function processUploadedFiles(){
-  const files = [...el("fileInput").files];
-  if(!files.length){ alert("Choose PDF, Word, Excel or JSON files first."); return; }
-
-  stagedRecords = [];
-  renderStaging();
-  el("uploadStatus").textContent = `Processing ${files.length} file(s)...`;
-  setProgress(0);
-
-  for(let i=0;i<files.length;i++){
-    const file = files[i];
-    try{
-      el("uploadStatus").textContent = `Processing ${i+1}/${files.length}: ${file.name}`;
-      const name = file.name.toLowerCase();
-      const text = await extractFileText(file);
-
-      if(name.endsWith(".json")){
-        const parsed = JSON.parse(text);
-        const arr = Array.isArray(parsed) ? parsed : [parsed];
-        arr.forEach(x => stagedRecords.push({...cleanRecord(x, file.name), _sourceMode:"JSON", _status:"Needs Review"}));
-      }else{
-        const out = await callOpenRouter([
-          {role:"system", content: PROCESSOR_PROMPT},
-          {role:"user", content:`SourceFile: ${file.name}\n\nDocument text:\n${text.slice(0, 120000)}`}
-        ]);
-        const parsed = parseJsonFromAI(out);
-        const arr = Array.isArray(parsed) ? parsed : [parsed];
-        arr.forEach(x => stagedRecords.push({...cleanRecord(x, file.name), _sourceMode:"AI", _status:"Needs Review"}));
-      }
-    }catch(err){
-      stagedRecords.push({...cleanRecord({SourceFile:file.name, Question:"PROCESSING ERROR: " + err.message}, file.name), _sourceMode:"ERROR", _status:"Error"});
-    }
-    setProgress(((i+1)/files.length)*100);
-    renderStaging();
-  }
-  el("uploadStatus").textContent = `Processed ${files.length} file(s). ${stagedRecords.length} record(s) staged. Review before import.`;
-}
-
-function setProgress(p){ el("progressBar").style.width = Math.max(0,Math.min(100,p)) + "%"; }
-
-function renderStaging(){
-  const area = el("stagingArea");
-  area.innerHTML = "";
-  if(!stagedRecords.length) return;
-
-  stagedRecords.forEach((r, idx) => {
-    const missing = validateRecord(r);
-    const card = document.createElement("div");
-    card.className = "preview-card";
-    card.innerHTML = `
-      <div class="preview-head">
-        <div>
-          <b>${idx+1}. ${escapeHtml(r.Year)} | ${escapeHtml(r.JC)} | ${escapeHtml(r.Level)} | ${escapeHtml(r.Group)}</b>
-          <span class="badge">${escapeHtml(r._sourceMode || "Staged")}</span>
-          <span class="badge">${escapeHtml(r._status || "Needs Review")}</span>
-        </div>
-        <div class="row">
-          <button class="light" data-review="${idx}">Review & Edit</button>
-          <button class="green" data-importone="${idx}">Import</button>
-          <button class="red" data-removestaged="${idx}">Remove</button>
-        </div>
-      </div>
-      ${missing.length ? `<div class="warning-card">Missing/invalid: ${escapeHtml(missing.join(", "))}</div>` : ""}
-      <div class="preview-summary"><b>Keywords:</b> ${escapeHtml(keywordString(r.Keywords))}
-
-<b>Question:</b>
-${escapeHtml(truncate(r.Question, 700))}
-
-<b>Extracts:</b>
-${escapeHtml(truncate(r.Extracts, 700))}</div>`;
-    area.appendChild(card);
-  });
-}
-
-document.addEventListener("click", async e => {
-  const review = e.target.closest("[data-review]");
-  const remove = e.target.closest("[data-removestaged]");
-  const importOne = e.target.closest("[data-importone]");
-  if(review) openReview(Number(review.dataset.review));
-  if(remove){
-    stagedRecords.splice(Number(remove.dataset.removestaged),1);
-    renderStaging();
-  }
-  if(importOne){
-    await importStagedRecord(Number(importOne.dataset.importone));
-  }
-});
-
-async function openReview(idx){
-  currentReviewIndex = idx;
-  const r = stagedRecords[idx];
-  el("reviewTitle").textContent = `Review & Edit Record ${idx+1}`;
-  el("reviewSubtext").textContent = `Source: ${r.SourceFile || "unknown"} | Mode: ${r._sourceMode || "unknown"}`;
-  el("reviewYear").value = r.Year || "";
-  el("reviewJC").value = r.JC || "";
-  el("reviewLevel").value = r.Level || "H2";
-  el("reviewGroup").value = r.Group || "";
-  el("reviewKeywords").value = keywordString(r.Keywords);
-  el("reviewExtracts").value = r.Extracts || "";
-  el("reviewQuestion").value = r.Question || "";
-  el("reviewAnswer").value = r.Answer || "";
-  el("reviewExaminerComments").value = r.ExaminerComments || "";
-  await showDuplicateWarning(r);
-  el("reviewBackdrop").style.display = "flex";
-}
-function closeReview(){ el("reviewBackdrop").style.display = "none"; currentReviewIndex = null; }
-
-function getReviewRecord(){
-  return cleanRecord({
-    Year: el("reviewYear").value,
-    JC: el("reviewJC").value,
-    Level: el("reviewLevel").value,
-    Group: el("reviewGroup").value,
-    Keywords: el("reviewKeywords").value,
-    Extracts: el("reviewExtracts").value,
-    Question: el("reviewQuestion").value,
-    Answer: el("reviewAnswer").value,
-    ExaminerComments: el("reviewExaminerComments").value,
-    SourceFile: currentReviewIndex !== null ? stagedRecords[currentReviewIndex].SourceFile : ""
-  });
-}
-async function saveReview(){
-  if(currentReviewIndex === null) return;
-  stagedRecords[currentReviewIndex] = {...stagedRecords[currentReviewIndex], ...getReviewRecord(), _status:"Reviewed"};
-  renderStaging();
-  await showDuplicateWarning(stagedRecords[currentReviewIndex]);
-}
-async function showDuplicateWarning(r){
-  const duplicate = findLocalDuplicate(r);
-  el("duplicateWarning").innerHTML = duplicate ? `<div class="warning-card"><b>Possible duplicate found:</b> ${escapeHtml(duplicate.Year)} | ${escapeHtml(duplicate.JC)} | ${escapeHtml(duplicate.Level)} | ${escapeHtml(duplicate.Group)}</div>` : "";
-}
-function findLocalDuplicate(r){
-  const qText = String(r.Question || "").trim().slice(0,160);
-  return questions.find(q => q.Year===r.Year && q.JC===r.JC && q.Level===r.Level && q.Group===r.Group && String(q.Question||"").includes(qText.slice(0,80)));
-}
-async function importStagedRecord(idx){
-  if(idx < 0 || idx >= stagedRecords.length) return;
-  const r = cleanRecord(stagedRecords[idx]);
-  const missing = validateRecord(r);
-  if(missing.length && !confirm("Missing/invalid fields: " + missing.join(", ") + ". Import anyway?")) return;
-  const dup = findLocalDuplicate(r);
-  if(dup && !confirm("Possible duplicate exists. Import anyway?")) return;
-  await addDoc(collection(db, "questions"), {...r, DateImported: new Date().toISOString(), Verified:false, createdAt: serverTimestamp(), updatedAt: serverTimestamp()});
-  stagedRecords[idx]._status = "Imported";
-  renderStaging();
-  await loadFirebase();
-}
-async function importReviewedRecords(){
-  if(!stagedRecords.length){ alert("No staged records to import."); return; }
-  let count = 0;
-  for(let i=0;i<stagedRecords.length;i++){
-    if(stagedRecords[i]._status === "Imported" || stagedRecords[i]._status === "Error") continue;
-    const r = cleanRecord(stagedRecords[i]);
-    const missing = validateRecord(r);
-    if(missing.length) continue;
-    await addDoc(collection(db, "questions"), {...r, DateImported: new Date().toISOString(), Verified:false, createdAt: serverTimestamp(), updatedAt: serverTimestamp()});
-    stagedRecords[i]._status = "Imported";
-    count++;
-  }
-  renderStaging();
-  await loadFirebase();
-  alert(`Imported ${count} reviewed/valid record(s).`);
-}
-
-function exportJSON(){
-  const data = filtered.map(q => cleanRecord(q));
-  const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "econs-question-bank-export.json";
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-el("processFilesButton").onclick = processUploadedFiles;
-el("importReviewedButton").onclick = importReviewedRecords;
-el("clearStagingButton").onclick = () => { stagedRecords = []; renderStaging(); el("uploadStatus").textContent = "Staging cleared."; setProgress(0); };
-el("searchButton").onclick = applyFilters;
-el("keywordInput").addEventListener("keydown", e => { if(e.key==="Enter") applyFilters(); });
-el("resetButton").onclick = () => { activeFilters={group:null,year:null,jc:null,level:null}; el("keywordInput").value=""; filtered=[...questions]; buildFilters(); renderResults(); };
-el("syncButton").onclick = loadFirebase;
-el("exportButton").onclick = exportJSON;
-el("addButton").onclick = () => openEditor(null);
-el("cancelEditButton").onclick = closeEditor;
-el("saveQuestionButton").onclick = saveEditor;
-el("aiKeywordsButton").onclick = generateKeywordsForEditor;
-el("aiExtractButton").onclick = identifyExtractsQuestionsForEditor;
-el("cancelReviewButton").onclick = closeReview;
-el("saveReviewButton").onclick = saveReview;
-el("importOneButton").onclick = async () => { await saveReview(); await importStagedRecord(currentReviewIndex); closeReview(); };
-
-initFirebase();
+async function importDatabase(event){const file=event.target.files[0];if(!file)return;if(!confirm("Import this JSON into Firestore? Duplicate URLs will be skipped."))return;const reader=new FileReader();reader.onload=async e=>{try{const data=JSON.parse(e.target.result), articles=Array.isArray(data)?data:data.articles;if(!Array.isArray(articles)){alert("Invalid backup format.");return}let imported=0,skipped=0;for(const a of articles){const article={title:a.title||"",source:a.source||"",publicationDate:a.publicationDate||a.displayDate||"",displayDate:a.publicationDate||a.displayDate||"",url:a.url||"",fullArticle:a.fullArticle||a.content||"",summary:a.summary||"",keywords:Array.isArray(a.keywords)?a.keywords:[],economicKeywords:Array.isArray(a.economicKeywords)?a.economicKeywords:[],economicsConcepts:Array.isArray(a.economicsConcepts)?a.economicsConcepts:[],fullArticleRaw:a.fullArticleRaw||a.fullArticle||a.content||"",fullArticleCleaned:a.fullArticleCleaned||a.fullArticle||a.content||"",createdAt:a.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()}; if(duplicateByUrl(article.url)){skipped++;continue} if(article.title&&article.fullArticle&&article.publicationDate){await addDoc(collection(db,ARTICLES_COLLECTION),article);imported++}}await loadArticlesFromFirestore();alert(`Import completed. Imported: ${imported}. Skipped duplicates: ${skipped}.`)}catch(err){alert("Import failed: "+err.message)}};reader.readAsText(file)}
+function escapeHtml(str){return String(str||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function escapeAttribute(str){return String(str||"").replace(/\\/g,"\\\\").replace(/'/g,"\\'").replace(/"/g,"&quot;")}
 </script>
 </body>
 </html>
