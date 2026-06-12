@@ -258,7 +258,7 @@ let filtered = [];
 let stagedRecords = [];
 let currentEditId = null;
 let currentReviewIndex = null;
-let activeFilters = { group:null, year:null, jc:null, level:null };
+let activeFilters = { group:[], year:[], jc:[], level:[] };
 
 const el = id => document.getElementById(id);
 
@@ -320,9 +320,9 @@ async function loadFirebase(){
 }
 
 function buildFilters(){
-  makeButtons("groupButtons", unique(["CSQ1","CSQ2","EQ1","EQ2","EQ3","EQ4","EQ5","EQ6","Others", ...questions.map(q=>q.Group)]), "group");
-  makeButtons("yearButtons", unique(["Before 2015","2015","2016","2017","2018","2019","2020","2021","2022","2023","2024","2025", ...questions.map(q=>q.Year)]), "year");
-  makeButtons("jcButtons", unique(["All BT","All Promo","ACJC","AJC","ASRJC","CJC","DHS","EJC","GCE","HCI","IJC","JJC","JPJC","MI","MJC","NJC","NYJC","PJC","RI","RVHS","SAJC","Spec","SRJC","TJC","TMJC","TPJC","VJC","YIJC","YJC", ...questions.map(q=>q.JC)]), "jc");
+  makeButtons("groupButtons", unique(["CSQ1","CSQ2","EQ1","EQ2","EQ3","EQ4","EQ5","EQ6", ...questions.map(q=>q.Group)]), "group");
+  makeButtons("yearButtons", unique(["2007","2008","2009","2010","2011","2012","2013","2014","2015","2016","2017","2018","2019","2020","2021","2022","2023","2024","2025", ...questions.map(q=>q.Year)]), "year");
+  makeButtons("jcButtons", unique(["All BT","ACJC","AJC","ASRJC","CJC","DHS","EJC","GCE","HCI","IJC","JJC","JPJC","MI","MJC","NJC","NYJC","PJC","RI","RVHS","SAJC","Spec","SRJC","TJC","TMJC","TPJC","VJC","YIJC","YJC", ...questions.map(q=>q.JC)]), "jc");
   makeButtons("levelButtons", unique(["H1","H2", ...questions.map(q=>q.Level)]), "level");
 }
 function unique(arr){
@@ -335,26 +335,34 @@ function unique(arr){
 function makeButtons(containerId, vals, type){
   const box = el(containerId);
   box.innerHTML = "";
+  if(!Array.isArray(activeFilters[type])) activeFilters[type] = [];
   vals.forEach(v => {
     const b = document.createElement("button");
     b.type = "button";
-    b.className = "filter-btn" + (activeFilters[type]===v ? " active" : "");
+    b.className = "filter-btn" + (activeFilters[type].includes(v) ? " active" : "");
     b.textContent = v;
     b.onclick = () => {
-      activeFilters[type] = activeFilters[type] === v ? null : v;
+      if(activeFilters[type].includes(v)){
+        activeFilters[type] = activeFilters[type].filter(x => x !== v);
+      }else{
+        activeFilters[type].push(v);
+      }
       applyFilters();
     };
     box.appendChild(b);
   });
 }
+function matchesSelected(value, selected){
+  return !selected || selected.length === 0 || selected.includes(String(value || ""));
+}
 
 function applyFilters(){
   const kw = el("keywordInput").value.trim().toLowerCase();
   filtered = questions.filter(q => {
-    const groupMatch = !activeFilters.group || q.Group === activeFilters.group || (activeFilters.group==="Others" && !/CSQ|EQ/.test(q.Group));
-    const yearMatch = !activeFilters.year || q.Year === activeFilters.year || String(q.Year).includes(activeFilters.year);
-    const jcMatch = !activeFilters.jc || q.JC === activeFilters.jc;
-    const levelMatch = !activeFilters.level || q.Level === activeFilters.level;
+    const groupMatch = matchesSelected(q.Group, activeFilters.group);
+    const yearMatch = matchesSelected(q.Year, activeFilters.year);
+    const jcMatch = matchesSelected(q.JC, activeFilters.jc);
+    const levelMatch = matchesSelected(q.Level, activeFilters.level);
     const hay = [
       q.Year,q.JC,q.Level,q.Group,keywordString(q.Keywords),q.Extracts,q.Question,q.Answer,q.ExaminerComments,q.SourceFile
     ].join(" ").toLowerCase();
@@ -727,7 +735,7 @@ el("importReviewedButton").onclick = importReviewedRecords;
 el("clearStagingButton").onclick = () => { stagedRecords = []; renderStaging(); el("uploadStatus").textContent = "Staging cleared."; setProgress(0); };
 el("searchButton").onclick = applyFilters;
 el("keywordInput").addEventListener("keydown", e => { if(e.key==="Enter") applyFilters(); });
-el("resetButton").onclick = () => { activeFilters={group:null,year:null,jc:null,level:null}; el("keywordInput").value=""; filtered=[...questions]; buildFilters(); renderResults(); };
+el("resetButton").onclick = () => { activeFilters={group:[],year:[],jc:[],level:[]}; el("keywordInput").value=""; filtered=[...questions]; buildFilters(); renderResults(); };
 el("syncButton").onclick = loadFirebase;
 el("exportButton").onclick = exportJSON;
 el("addButton").onclick = () => openEditor(null);
