@@ -44,7 +44,7 @@ button{cursor:pointer;font-weight:bold}
 .button-group{display:flex;flex-wrap:wrap;gap:6px}
 .filter-btn{border:1px solid #c7cede;background:#f8fafc;color:#334155;padding:6px 10px;border-radius:999px;cursor:pointer;font-size:13px}
 .filter-btn.active{background:var(--blue);color:white;border-color:var(--blue)}
-.controls{display:grid;grid-template-columns:minmax(220px,1fr) repeat(5,auto);gap:10px;margin-top:10px;align-items:center}
+.controls{display:grid;grid-template-columns:minmax(220px,1fr) repeat(7,auto);gap:10px;margin-top:10px;align-items:center}
 .table-wrap{max-height:58vh;overflow:auto}
 table{width:100%;border-collapse:collapse;background:white;min-width:1900px;font-size:13px}
 th,td{border-bottom:1px solid #e5e7eb;padding:8px;text-align:left;vertical-align:top;font-size:13px}
@@ -112,6 +112,9 @@ tr:nth-child(even){background:#f9fafb}
   <div class="controls">
     <input id="keywordInput" type="text" placeholder="Search keyword, question, extract, answer, examiner comments, JC, year...">
     <button class="main" id="searchButton" type="button">Search</button>
+    <button class="purple" id="importJsonButton" type="button">Import JSON</button>
+    <button class="red" id="bulkDeleteButton" type="button">Delete Question</button>
+    <input id="jsonImportInput" type="file" multiple accept=".json" style="display:none">
     <button class="secondary" id="resetButton" type="button">Reset</button>
     <button class="green" id="addButton" type="button">+ Add Question</button>
     <button class="orange" id="syncButton" type="button">Reload Firebase</button>
@@ -258,7 +261,9 @@ let filtered = [];
 let stagedRecords = [];
 let currentEditId = null;
 let currentReviewIndex = null;
-let activeFilters = { group:[], year:[], jc:[], level:[] };
+let activeFilters = { group:new Set(), year:new Set(), jc:new Set(), level:new Set() };
+let deleteMode = false;
+let selectedDeleteIds = new Set();
 
 const el = id => document.getElementById(id);
 
@@ -320,9 +325,9 @@ async function loadFirebase(){
 }
 
 function buildFilters(){
-  makeButtons("groupButtons", unique(["CSQ1","CSQ2","EQ1","EQ2","EQ3","EQ4","EQ5","EQ6", ...questions.map(q=>q.Group)]), "group");
-  makeButtons("yearButtons", unique(["2007","2008","2009","2010","2011","2012","2013","2014","2015","2016","2017","2018","2019","2020","2021","2022","2023","2024","2025", ...questions.map(q=>q.Year)]), "year");
-  makeButtons("jcButtons", unique(["All BT","ACJC","AJC","ASRJC","CJC","DHS","EJC","GCE","HCI","IJC","JJC","JPJC","MI","MJC","NJC","NYJC","PJC","RI","RVHS","SAJC","Spec","SRJC","TJC","TMJC","TPJC","VJC","YIJC","YJC", ...questions.map(q=>q.JC)]), "jc");
+  makeButtons("groupButtons", unique(["CSQ1","CSQ2","EQ1","EQ2","EQ3","EQ4","EQ5","EQ6", ...questions.map(q=>q.Group)]).filter(v => v !== "Others"), "group");
+  makeButtons("yearButtons", unique(["2007","2008","2009","2010","2011","2012","2013","2014","2015","2016","2017","2018","2019","2020","2021","2022","2023","2024","2025", ...questions.map(q=>q.Year)]).filter(v => v !== "Before 2015"), "year");
+  makeButtons("jcButtons", unique(["All BT","ACJC","AJC","ASRJC","CJC","DHS","EJC","GCE","HCI","IJC","JJC","JPJC","MI","MJC","NJC","NYJC","PJC","RI","RVHS","SAJC","Spec","SRJC","TJC","TMJC","TPJC","VJC","YIJC","YJC", ...questions.map(q=>q.JC)]).filter(v => v !== "All Promo"), "jc");
   makeButtons("levelButtons", unique(["H1","H2", ...questions.map(q=>q.Level)]), "level");
 }
 function unique(arr){
@@ -335,34 +340,27 @@ function unique(arr){
 function makeButtons(containerId, vals, type){
   const box = el(containerId);
   box.innerHTML = "";
-  if(!Array.isArray(activeFilters[type])) activeFilters[type] = [];
   vals.forEach(v => {
     const b = document.createElement("button");
     b.type = "button";
-    b.className = "filter-btn" + (activeFilters[type].includes(v) ? " active" : "");
+    b.className = "filter-btn" + (activeFilters[type].has(v) ? " active" : "");
     b.textContent = v;
     b.onclick = () => {
-      if(activeFilters[type].includes(v)){
-        activeFilters[type] = activeFilters[type].filter(x => x !== v);
-      }else{
-        activeFilters[type].push(v);
-      }
+      if(activeFilters[type].has(v)) activeFilters[type].delete(v);
+      else activeFilters[type].add(v);
       applyFilters();
     };
     box.appendChild(b);
   });
 }
-function matchesSelected(value, selected){
-  return !selected || selected.length === 0 || selected.includes(String(value || ""));
-}
 
 function applyFilters(){
   const kw = el("keywordInput").value.trim().toLowerCase();
   filtered = questions.filter(q => {
-    const groupMatch = matchesSelected(q.Group, activeFilters.group);
-    const yearMatch = matchesSelected(q.Year, activeFilters.year);
-    const jcMatch = matchesSelected(q.JC, activeFilters.jc);
-    const levelMatch = matchesSelected(q.Level, activeFilters.level);
+    const groupMatch = !activeFilters.group.size || activeFilters.group.has(q.Group);
+    const yearMatch = !activeFilters.year.size || activeFilters.year.has(q.Year) || [...activeFilters.year].some(y => String(q.Year).includes(y));
+    const jcMatch = !activeFilters.jc.size || activeFilters.jc.has(q.JC);
+    const levelMatch = !activeFilters.level.size || activeFilters.level.has(q.Level);
     const hay = [
       q.Year,q.JC,q.Level,q.Group,keywordString(q.Keywords),q.Extracts,q.Question,q.Answer,q.ExaminerComments,q.SourceFile
     ].join(" ").toLowerCase();
@@ -389,6 +387,7 @@ function renderResults(){
       <td class="question">${escapeHtml(q.Answer || "")}</td>
       <td class="question">${escapeHtml(q.ExaminerComments || "")}</td>
       <td><div class="actions">
+        ${deleteMode ? `<label style="display:flex;align-items:center;gap:5px;font-weight:normal"><input type="checkbox" data-selectdelete="${q.id}" ${selectedDeleteIds.has(q.id) ? "checked" : ""} style="width:auto"> Select</label>` : ""}
         <button class="light" data-act="edit" data-id="${q.id}">Edit</button>
         <button class="red" data-act="delete" data-id="${q.id}">Delete</button>
       </div></td>`;
@@ -398,6 +397,12 @@ function renderResults(){
 }
 
 document.addEventListener("click", async e => {
+  const checkbox = e.target.closest("input[data-selectdelete]");
+  if(checkbox){
+    if(checkbox.checked) selectedDeleteIds.add(checkbox.dataset.selectdelete);
+    else selectedDeleteIds.delete(checkbox.dataset.selectdelete);
+    return;
+  }
   const btn = e.target.closest("button[data-act]");
   if(!btn) return;
   const id = btn.dataset.id;
@@ -730,12 +735,63 @@ function exportJSON(){
   URL.revokeObjectURL(a.href);
 }
 
+async function importJsonFromButton(){
+  const files = [...el("jsonImportInput").files];
+  if(!files.length) return;
+  stagedRecords = [];
+  renderStaging();
+  el("uploadStatus").textContent = `Loading ${files.length} JSON file(s)...`;
+  setProgress(0);
+  for(let i=0;i<files.length;i++){
+    const file = files[i];
+    try{
+      const text = await extractFileText(file);
+      const parsed = JSON.parse(text);
+      const arr = Array.isArray(parsed) ? parsed : [parsed];
+      arr.forEach(x => stagedRecords.push({...cleanRecord(x, file.name), _sourceMode:"JSON", _status:"Needs Review"}));
+    }catch(err){
+      stagedRecords.push({...cleanRecord({SourceFile:file.name, Question:"JSON IMPORT ERROR: " + err.message}, file.name), _sourceMode:"ERROR", _status:"Error"});
+    }
+    setProgress(((i+1)/files.length)*100);
+  }
+  renderStaging();
+  el("uploadStatus").textContent = `Loaded ${stagedRecords.length} JSON record(s). Review, then click Import Reviewed Records.`;
+  document.querySelector(".panel:nth-of-type(2)").scrollIntoView({behavior:"smooth"});
+  el("jsonImportInput").value = "";
+}
+
+async function handleBulkDelete(){
+  if(!deleteMode){
+    deleteMode = true;
+    selectedDeleteIds.clear();
+    renderResults();
+    alert("Delete mode is on. Select the question(s) using the checkboxes in the Actions column, then click Delete Question again.");
+    return;
+  }
+  if(!selectedDeleteIds.size){
+    deleteMode = false;
+    renderResults();
+    alert("No questions selected. Delete mode is now off.");
+    return;
+  }
+  if(!confirm(`Delete ${selectedDeleteIds.size} selected question(s) from Firebase?`)) return;
+  for(const id of selectedDeleteIds){
+    await deleteDoc(doc(db, "questions", id));
+  }
+  selectedDeleteIds.clear();
+  deleteMode = false;
+  await loadFirebase();
+}
+
 el("processFilesButton").onclick = processUploadedFiles;
 el("importReviewedButton").onclick = importReviewedRecords;
 el("clearStagingButton").onclick = () => { stagedRecords = []; renderStaging(); el("uploadStatus").textContent = "Staging cleared."; setProgress(0); };
 el("searchButton").onclick = applyFilters;
+el("importJsonButton").onclick = () => el("jsonImportInput").click();
+el("jsonImportInput").addEventListener("change", importJsonFromButton);
+el("bulkDeleteButton").onclick = handleBulkDelete;
 el("keywordInput").addEventListener("keydown", e => { if(e.key==="Enter") applyFilters(); });
-el("resetButton").onclick = () => { activeFilters={group:[],year:[],jc:[],level:[]}; el("keywordInput").value=""; filtered=[...questions]; buildFilters(); renderResults(); };
+el("resetButton").onclick = () => { activeFilters={group:new Set(),year:new Set(),jc:new Set(),level:new Set()}; selectedDeleteIds.clear(); deleteMode=false; el("keywordInput").value=""; filtered=[...questions]; buildFilters(); renderResults(); };
 el("syncButton").onclick = loadFirebase;
 el("exportButton").onclick = exportJSON;
 el("addButton").onclick = () => openEditor(null);
