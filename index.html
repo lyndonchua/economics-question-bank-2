@@ -66,10 +66,47 @@ tr:nth-child(even){background:#f9fafb}
 .badge{display:inline-block;border-radius:999px;padding:2px 8px;font-size:12px;background:#eef2ff;color:#3730a3;border:1px solid #c7d2fe}
 .warning-card{border:1px solid #fbbf24;background:#fffbeb;color:#92400e;border-radius:10px;padding:8px;margin-top:8px}
 @media(max-width:900px){.grid,.controls{grid-template-columns:1fr}.modal{width:98vw}}
+
+
+/* Passcode entry screen */
+#loginScreen{
+  position:fixed;
+  inset:0;
+  background:var(--light);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:99999;
+  padding:20px;
+}
+.login-card{
+  background:white;
+  padding:28px;
+  border-radius:16px;
+  width:min(360px,100%);
+  border:1px solid var(--border);
+  box-shadow:0 8px 30px rgba(0,0,0,.14);
+  text-align:center;
+}
+.login-card h2{margin:0 0 18px;color:var(--dark)}
+.login-card input{margin-bottom:12px;font-size:16px;text-align:center}
+.login-card button{width:100%;background:var(--blue);color:white;border:none}
+#loginError{color:var(--red);font-weight:bold;min-height:20px;margin:10px 0 0;font-size:13px}
+#appContent{display:none}
+
 </style>
 </head>
 
 <body>
+<div id="loginScreen">
+  <div class="login-card">
+    <h2>Economics Question Bank</h2>
+    <input type="password" id="passcodeInput" placeholder="Enter Passcode" autocomplete="off" />
+    <button id="passcodeButton" type="button">Enter</button>
+    <p id="loginError"></p>
+  </div>
+</div>
+<div id="appContent">
 <h1>Economics Question Bank V5</h1>
 
 <div class="panel">
@@ -184,6 +221,8 @@ tr:nth-child(even){background:#f9fafb}
       <button class="green" id="importOneButton" type="button">Import This Record</button>
     </div>
   </div>
+</div>
+
 </div>
 
 <script type="module">
@@ -803,7 +842,42 @@ el("cancelReviewButton").onclick = closeReview;
 el("saveReviewButton").onclick = saveReview;
 el("importOneButton").onclick = async () => { await saveReview(); await importStagedRecord(currentReviewIndex); closeReview(); };
 
-initFirebase();
+
+const APP_PASSCODE = "344565";
+let appStarted = false;
+
+function unlockApp(){
+  document.getElementById("loginScreen").style.display = "none";
+  document.getElementById("appContent").style.display = "block";
+  if(!appStarted){
+    appStarted = true;
+    initFirebase();
+  }
+}
+
+function checkPasscode(){
+  const input = document.getElementById("passcodeInput");
+  const error = document.getElementById("loginError");
+  if(input.value === APP_PASSCODE){
+    sessionStorage.setItem("econs_question_bank_passcode_ok", "true");
+    unlockApp();
+  }else{
+    error.textContent = "Incorrect passcode";
+    input.value = "";
+    input.focus();
+  }
+}
+
+document.getElementById("passcodeButton").addEventListener("click", checkPasscode);
+document.getElementById("passcodeInput").addEventListener("keydown", e => {
+  if(e.key === "Enter") checkPasscode();
+});
+
+if(sessionStorage.getItem("econs_question_bank_passcode_ok") === "true"){
+  unlockApp();
+}else{
+  document.getElementById("passcodeInput").focus();
+}
 </script>
 </body>
 </html>
