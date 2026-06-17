@@ -76,6 +76,18 @@ tr:nth-child(even){background:#f9fafb}
 </head>
 
 <body>
+<script>
+const PASSCODE = "344565";
+const savedAuth = sessionStorage.getItem("qb_auth");
+if (savedAuth !== PASSCODE) {
+  const entered = prompt("Enter Passcode");
+  if (entered !== PASSCODE) {
+    document.body.innerHTML = "<h2 style='text-align:center;margin-top:50px;font-family:Arial'>Access Denied</h2>";
+    throw new Error("Invalid passcode");
+  }
+  sessionStorage.setItem("qb_auth", PASSCODE);
+}
+</script>
 <h1>Economics Question Bank V5</h1>
 
 <div class="panel">
@@ -413,8 +425,7 @@ function renderResults(){
       <td>${escapeHtml(q.JC)}</td>
       <td>${escapeHtml(q.Level)}</td>
       <td>${escapeHtml(q.Group)}</td>
-      <td>${asArrayKeywords(q.Keywords).slice(0,8).map(k=>`<span class="tag">${escapeHtml(k)}</span>`).join("")}</td>
-      <td class="summary-cell"><b>Question:</b> ${escapeHtml(truncate(q.Question || "", 360))}</td>
+      <td class="summary-cell">${escapeHtml(q.Question || "")}</td>
       <td class="mini">Extracts: ${hasExtracts ? "Yes" : "No"}<br>Answer: ${hasAnswer ? "Yes" : "No"}<br>Comments: ${hasComments ? "Yes" : "No"}</td>
       <td class="action-sticky"><div class="actions">
         ${deleteMode ? `<label style="display:flex;align-items:center;gap:5px;font-weight:normal"><input type="checkbox" data-selectdelete="${q.id}" ${selectedDeleteIds.has(q.id) ? "checked" : ""} style="width:auto"> Select</label>` : ""}
