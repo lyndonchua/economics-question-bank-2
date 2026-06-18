@@ -77,16 +77,20 @@ tr:nth-child(even){background:#f9fafb}
 
 <body>
 <script>
+window.QB_AUTH_OK = false;
 const PASSCODE = "344565";
 const savedAuth = sessionStorage.getItem("qb_auth");
 if (savedAuth !== PASSCODE) {
   const entered = prompt("Enter Passcode");
   if (entered !== PASSCODE) {
-    document.body.innerHTML = "<h2 style='text-align:center;margin-top:50px;font-family:Arial'>Access Denied</h2>";
+    document.addEventListener("DOMContentLoaded", () => {
+      document.body.innerHTML = "<h2 style='text-align:center;margin-top:50px;font-family:Arial;color:#102a5c'>Access Denied</h2>";
+    });
     throw new Error("Invalid passcode");
   }
   sessionStorage.setItem("qb_auth", PASSCODE);
 }
+window.QB_AUTH_OK = true;
 </script>
 <h1>Economics Question Bank V5</h1>
 
@@ -212,6 +216,7 @@ if (savedAuth !== PASSCODE) {
 </div>
 
 <script type="module">
+if (!window.QB_AUTH_OK) { throw new Error("Invalid passcode"); }
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import {
   getFirestore, collection, getDocs, addDoc, setDoc, doc, deleteDoc,
