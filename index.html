@@ -141,9 +141,15 @@ window.QB_AUTH_OK = true;
     <button class="green" id="addButton" type="button">+ Add Question</button>
     <button class="orange" id="syncButton" type="button">Reload Firebase</button>
     <button class="light" id="exportButton" type="button">Export JSON</button>
+    <button class="light" id="exportExcelButton" type="button">Export Questions + Extracts Excel</button>
+    <button class="light" id="exportWordButton" type="button">Export Questions + Extracts Word</button>
   </div>
   <div id="count" class="small" style="margin-top:10px"></div>
   <div class="compact-note"><b>Speed mode:</b> the table now shows lightweight summaries only. Full Extracts, Answers and Examiner Comments load only when you open an entry.</div>
+  <div class="controls" style="margin-top:10px">
+    <label style="margin:0"><span class="small">Sort by</span><select id="sortFieldSelect" style="width:auto;padding:7px"><option value="Year">Year</option><option value="JC">JC</option><option value="Level">Level</option><option value="Group">Group</option><option value="Question">Question</option></select></label>
+    <label style="margin:0"><span class="small">Order</span><select id="sortOrderSelect" style="width:auto;padding:7px"><option value="asc">Ascending</option><option value="desc">Descending</option></select></label>
+  </div>
   <div class="pagination">
     <button class="light" id="prevPageButton" type="button">← Previous</button>
     <span id="pageInfo" class="small"></span>
@@ -156,8 +162,8 @@ window.QB_AUTH_OK = true;
   <table>
     <thead>
       <tr>
-        <th>Year</th><th>JC</th><th>Level</th><th>Group</th><th>Keywords</th>
-        <th>Question Preview</th><th>Content Status</th><th>Actions</th>
+        <th>Year</th><th>JC</th><th>Level</th><th>Group</th>
+        <th>Question</th><th>Content Status</th><th>Actions</th>
       </tr>
     </thead>
     <tbody id="resultsBody"></tbody>
@@ -296,6 +302,8 @@ let deleteMode = false;
 let selectedDeleteIds = new Set();
 let currentPage = 1;
 let pageSize = 50;
+let sortField = "Year";
+let sortOrder = "asc";
 let lastEditedId = null;
 
 const el = id => document.getElementById(id);
@@ -358,6 +366,7 @@ async function loadFirebase(){
   const snap = await getDocs(collection(db, "questions"));
   questions = snap.docs.map(d => ({ id:d.id, ...cleanRecord(d.data()) }));
   filtered = [...questions];
+  applySort();
   currentPage = 1;
   buildFilters();
   renderResults();
@@ -393,6 +402,18 @@ function makeButtons(containerId, vals, type){
   });
 }
 
+function applySort(){
+  filtered.sort((a,b) => {
+    const av = String(a[sortField] || "");
+    const bv = String(b[sortField] || "");
+    const an = Number(av), bn = Number(bv);
+    let result;
+    if(av.trim() !== "" && bv.trim() !== "" && !Number.isNaN(an) && !Number.isNaN(bn)) result = an - bn;
+    else result = av.localeCompare(bv, undefined, {numeric:true, sensitivity:"base"});
+    return sortOrder === "desc" ? -result : result;
+  });
+}
+
 function applyFilters(){
   const kw = el("keywordInput").value.trim().toLowerCase();
   filtered = questions.filter(q => {
@@ -403,6 +424,7 @@ function applyFilters(){
     const kwMatch = !kw || (q._searchText || makeSearchText(q)).includes(kw);
     return groupMatch && yearMatch && jcMatch && levelMatch && kwMatch;
   });
+  applySort();
   currentPage = 1;
   buildFilters();
   renderResults();
@@ -792,6 +814,65 @@ function exportJSON(){
   URL.revokeObjectURL(a.href);
 }
 
+function exportQuestionsExtractsExcel(){
+  const rows = filtered.map(q => ({
+    Year: q.Year || "",
+    JC: q.JC || "",
+    Level: q.Level || "",
+    Group: q.Group || "",
+    Question: q.Question || "",
+    Extracts: q.Extracts || ""
+  }));
+  if(!rows.length){ alert("No displayed questions to export."); return; }
+  const tableRows = rows.map(r => `
+    <tr>
+      <td>${escapeHtml(r.Year)}</td>
+      <td>${escapeHtml(r.JC)}</td>
+      <td>${escapeHtml(r.Level)}</td>
+      <td>${escapeHtml(r.Group)}</td>
+      <td style="white-space:pre-wrap">${escapeHtml(r.Question)}</td>
+      <td style="white-space:pre-wrap">${escapeHtml(r.Extracts)}</td>
+    </tr>`).join("");
+  const html = `<!doctype html><html><head><meta charset="utf-8"></head><body>
+    <table border="1">
+      <thead><tr><th>Year</th><th>JC</th><th>Level</th><th>Group</th><th>Question</th><th>Extracts</th></tr></thead>
+      <tbody>${tableRows}</tbody>
+    </table>
+  </body></html>`;
+  const blob = new Blob([html], {type:"application/vnd.ms-excel"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "displayed-questions-extracts.xls";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function exportQuestionsExtractsWord(){
+  const rows = filtered.map(q => ({
+    Year: q.Year || "",
+    JC: q.JC || "",
+    Level: q.Level || "",
+    Group: q.Group || "",
+    Question: q.Question || "",
+    Extracts: q.Extracts || ""
+  }));
+  if(!rows.length){ alert("No displayed questions to export."); return; }
+  const sections = rows.map((r, i) => `
+    <h2>${i + 1}. ${escapeHtml(r.Year)} ${escapeHtml(r.JC)} ${escapeHtml(r.Level)} ${escapeHtml(r.Group)}</h2>
+    <h3>Question</h3>
+    <div style="white-space:pre-wrap">${escapeHtml(r.Question)}</div>
+    <h3>Extracts</h3>
+    <div style="white-space:pre-wrap">${escapeHtml(r.Extracts)}</div>
+    <hr>`).join("");
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Displayed Questions and Extracts</title></head><body>${sections}</body></html>`;
+  const blob = new Blob([html], {type:"application/msword"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "displayed-questions-extracts.doc";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
 async function importJsonFromButton(){
   const files = [...el("jsonImportInput").files];
   if(!files.length) return;
@@ -848,12 +929,16 @@ el("importJsonButton").onclick = () => el("jsonImportInput").click();
 el("jsonImportInput").addEventListener("change", importJsonFromButton);
 el("bulkDeleteButton").onclick = handleBulkDelete;
 el("keywordInput").addEventListener("keydown", e => { if(e.key==="Enter") applyFilters(); });
-el("resetButton").onclick = () => { activeFilters={group:new Set(),year:new Set(),jc:new Set(),level:new Set()}; selectedDeleteIds.clear(); deleteMode=false; currentPage=1; el("keywordInput").value=""; filtered=[...questions]; buildFilters(); renderResults(); };
+el("resetButton").onclick = () => { activeFilters={group:new Set(),year:new Set(),jc:new Set(),level:new Set()}; selectedDeleteIds.clear(); deleteMode=false; currentPage=1; el("keywordInput").value=""; filtered=[...questions]; applySort(); buildFilters(); renderResults(); };
 el("syncButton").onclick = loadFirebase;
 el("prevPageButton").onclick = () => { currentPage--; renderResults(); };
 el("nextPageButton").onclick = () => { currentPage++; renderResults(); };
 el("pageSizeSelect").onchange = e => { pageSize = Number(e.target.value) || 50; currentPage = 1; renderResults(); };
+el("sortFieldSelect").onchange = e => { sortField = e.target.value; applySort(); currentPage = 1; renderResults(); };
+el("sortOrderSelect").onchange = e => { sortOrder = e.target.value; applySort(); currentPage = 1; renderResults(); };
 el("exportButton").onclick = exportJSON;
+el("exportExcelButton").onclick = exportQuestionsExtractsExcel;
+el("exportWordButton").onclick = exportQuestionsExtractsWord;
 el("addButton").onclick = () => openEditor(null);
 el("cancelEditButton").onclick = closeEditor;
 el("saveQuestionButton").onclick = saveEditor;
